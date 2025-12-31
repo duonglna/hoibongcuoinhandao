@@ -22,15 +22,39 @@ function getAuth() {
     }
     
     // Handle different formats of private key
-    // Remove quotes if present
-    privateKey = privateKey.replace(/^["']|["']$/g, '');
+    // Remove outer quotes if present (but keep inner quotes in the key itself)
+    privateKey = privateKey.trim();
+    if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+      privateKey = privateKey.slice(1, -1);
+    }
     
     // Replace escaped newlines with actual newlines
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    // Handle both \\n (double escaped) and \n (single escaped)
+    privateKey = privateKey.replace(/\\\\n/g, '\n'); // First handle double escaped
+    privateKey = privateKey.replace(/\\n/g, '\n');   // Then handle single escaped
+    
+    // If the key doesn't have actual newlines but has \n, try to split and join
+    if (!privateKey.includes('\n') && privateKey.includes('\\n')) {
+      privateKey = privateKey.split('\\n').join('\n');
+    }
+    
+    // Ensure proper line breaks around BEGIN/END markers
+    if (!privateKey.includes('\n-----BEGIN')) {
+      privateKey = privateKey.replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n');
+    }
+    if (!privateKey.includes('-----END\n')) {
+      privateKey = privateKey.replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
+    }
     
     // Ensure it starts and ends with proper markers
     if (!privateKey.includes('BEGIN PRIVATE KEY')) {
       console.error('Private key format is invalid - missing BEGIN PRIVATE KEY');
+      return null;
+    }
+    
+    if (!privateKey.includes('END PRIVATE KEY')) {
+      console.error('Private key format is invalid - missing END PRIVATE KEY');
       return null;
     }
     
@@ -42,7 +66,7 @@ function getAuth() {
     try {
       auth = new google.auth.GoogleAuth({
         credentials: {
-          client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+          client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL.trim(),
           private_key: privateKey,
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -97,12 +121,21 @@ export async function initializeSheets() {
   }
   
   // Validate private key format
-  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
-  privateKey = privateKey.replace(/^["']|["']$/g, ''); // Remove quotes
-  privateKey = privateKey.replace(/\\n/g, '\n'); // Replace escaped newlines
+  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY || '';
+  privateKey = privateKey.trim();
+  
+  // Remove outer quotes
+  if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
+      (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+    privateKey = privateKey.slice(1, -1);
+  }
+  
+  // Replace escaped newlines
+  privateKey = privateKey.replace(/\\\\n/g, '\n');
+  privateKey = privateKey.replace(/\\n/g, '\n');
   
   if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
-    throw new Error('GOOGLE_SHEETS_PRIVATE_KEY format is invalid. It should start with "-----BEGIN PRIVATE KEY-----" and end with "-----END PRIVATE KEY-----"');
+    throw new Error('GOOGLE_SHEETS_PRIVATE_KEY format is invalid. It should start with "-----BEGIN PRIVATE KEY-----" and end with "-----END PRIVATE KEY-----". Make sure to copy the entire private key from the Service Account JSON file.');
   }
   
   const sheetsClient = getSheets();
