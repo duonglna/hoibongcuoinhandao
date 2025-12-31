@@ -1,14 +1,46 @@
 import { google } from 'googleapis';
 
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  },
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
+// Skip Google Sheets initialization during build time
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                    process.env.NETLIFY === 'true' && !process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
 
-const sheets = google.sheets({ version: 'v4', auth });
+let auth: any = null;
+let sheets: any = null;
+
+function getAuth() {
+  if (isBuildTime) {
+    // Return a mock auth during build
+    return null;
+  }
+  
+  if (!auth) {
+    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL || !privateKey) {
+      return null;
+    }
+    
+    auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+        private_key: privateKey,
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  }
+  return auth;
+}
+
+function getSheets() {
+  if (isBuildTime || !getAuth()) {
+    return null;
+  }
+  
+  if (!sheets) {
+    sheets = google.sheets({ version: 'v4', auth: getAuth() });
+  }
+  return sheets;
+}
+
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || '';
 
 // Sheet names
@@ -22,9 +54,18 @@ const SHEETS = {
 
 // Initialize sheets if they don't exist
 export async function initializeSheets() {
+  if (isBuildTime) {
+    return; // Skip during build
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return;
+  }
+  
   try {
     // Check if sheets exist and create if needed
-    const spreadsheet = await sheets.spreadsheets.get({
+    const spreadsheet = await sheetsClient.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
     });
 
@@ -33,10 +74,10 @@ export async function initializeSheets() {
     const sheetsToCreate = Object.values(SHEETS).filter(name => !existingSheets.includes(name));
     
     if (sheetsToCreate.length > 0) {
-      await sheets.spreadsheets.batchUpdate({
+      await sheetsClient.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
-          requests: sheetsToCreate.map(name => ({
+          requests: sheetsToCreate.map((name: string) => ({
             addSheet: {
               properties: { title: name },
             },
@@ -46,7 +87,7 @@ export async function initializeSheets() {
 
       // Add headers
       await Promise.all([
-        sheets.spreadsheets.values.update({
+        sheetsClient.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.MEMBERS}!A1:D1`,
           valueInputOption: 'RAW',
@@ -54,7 +95,7 @@ export async function initializeSheets() {
             values: [['ID', 'Name', 'Phone', 'Email']],
           },
         }),
-        sheets.spreadsheets.values.update({
+        sheetsClient.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.COURTS}!A1:F1`,
           valueInputOption: 'RAW',
@@ -62,7 +103,7 @@ export async function initializeSheets() {
             values: [['ID', 'Name', 'Address', 'GoogleMapLink', 'PricePerHour', 'Active']],
           },
         }),
-        sheets.spreadsheets.values.update({
+        sheetsClient.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.SCHEDULES}!A1:J1`,
           valueInputOption: 'RAW',
@@ -70,7 +111,7 @@ export async function initializeSheets() {
             values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
           },
         }),
-        sheets.spreadsheets.values.update({
+        sheetsClient.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.PAYMENTS}!A1:F1`,
           valueInputOption: 'RAW',
@@ -78,7 +119,7 @@ export async function initializeSheets() {
             values: [['ID', 'ScheduleID', 'MemberID', 'CourtShare', 'RacketShare', 'WaterShare']],
           },
         }),
-        sheets.spreadsheets.values.update({
+        sheetsClient.spreadsheets.values.update({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.FUNDS}!A1:C1`,
           valueInputOption: 'RAW',
@@ -95,8 +136,17 @@ export async function initializeSheets() {
 
 // Members
 export async function getMembers() {
+  if (isBuildTime) {
+    return [];
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return [];
+  }
+  
   try {
-    const response = await sheets.spreadsheets.values.get({
+    const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.MEMBERS}!A2:D`,
     });
@@ -113,7 +163,7 @@ export async function getMembers() {
       try {
         await initializeSheets();
         // Try again after initialization
-        const response = await sheets.spreadsheets.values.get({
+        const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.MEMBERS}!A2:D`,
         });
@@ -134,8 +184,13 @@ export async function getMembers() {
 }
 
 export async function addMember(member: { name: string; phone?: string; email?: string }) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const id = `member_${Date.now()}`;
-  await sheets.spreadsheets.values.append({
+  await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.MEMBERS}!A:D`,
     valueInputOption: 'RAW',
@@ -147,13 +202,18 @@ export async function addMember(member: { name: string; phone?: string; email?: 
 }
 
 export async function updateMember(id: string, member: { name: string; phone?: string; email?: string }) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const members = await getMembers();
   const memberIndex = members.findIndex(m => m.id === id);
   if (memberIndex === -1) throw new Error('Member not found');
 
   const rowIndex = memberIndex + 2; // +2 because of header and 0-based index
   
-  await sheets.spreadsheets.values.update({
+  await sheetsClient.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.MEMBERS}!A${rowIndex}:D${rowIndex}`,
     valueInputOption: 'RAW',
@@ -164,13 +224,18 @@ export async function updateMember(id: string, member: { name: string; phone?: s
 }
 
 export async function deleteMember(id: string) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const members = await getMembers();
   const memberIndex = members.findIndex(m => m.id === id);
   if (memberIndex === -1) throw new Error('Member not found');
 
   const rowIndex = memberIndex + 2;
   
-  await sheets.spreadsheets.batchUpdate({
+  await sheetsClient.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
       requests: [{
@@ -188,7 +253,12 @@ export async function deleteMember(id: string) {
 }
 
 async function getSheetId(sheetName: string): Promise<number> {
-  const spreadsheet = await sheets.spreadsheets.get({
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
+  const spreadsheet = await sheetsClient.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });
   const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
@@ -198,8 +268,17 @@ async function getSheetId(sheetName: string): Promise<number> {
 
 // Courts
 export async function getCourts() {
+  if (isBuildTime) {
+    return [];
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return [];
+  }
+  
   try {
-    const response = await sheets.spreadsheets.values.get({
+    const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.COURTS}!A2:F`,
     });
@@ -215,7 +294,7 @@ export async function getCourts() {
     if (error?.response?.status === 400) {
       try {
         await initializeSheets();
-        const response = await sheets.spreadsheets.values.get({
+        const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.COURTS}!A2:F`,
         });
@@ -243,8 +322,13 @@ export async function addCourt(court: {
   googleMapLink: string;
   pricePerHour: number;
 }) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const id = `court_${Date.now()}`;
-  await sheets.spreadsheets.values.append({
+  await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.COURTS}!A:F`,
     valueInputOption: 'RAW',
@@ -268,7 +352,12 @@ export async function updateCourt(id: string, court: {
 
   const rowIndex = courtIndex + 2;
   
-  await sheets.spreadsheets.values.update({
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
+  await sheetsClient.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.COURTS}!A${rowIndex}:F${rowIndex}`,
     valueInputOption: 'RAW',
@@ -286,7 +375,12 @@ export async function deleteCourt(id: string) {
   const rowIndex = courtIndex + 2;
   const sheetId = await getSheetId(SHEETS.COURTS);
   
-  await sheets.spreadsheets.batchUpdate({
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
+  await sheetsClient.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
       requests: [{
@@ -305,8 +399,17 @@ export async function deleteCourt(id: string) {
 
 // Schedules
 export async function getSchedules() {
+  if (isBuildTime) {
+    return [];
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return [];
+  }
+  
   try {
-    const response = await sheets.spreadsheets.values.get({
+    const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.SCHEDULES}!A2:J`,
     });
@@ -326,7 +429,7 @@ export async function getSchedules() {
     if (error?.response?.status === 400) {
       try {
         await initializeSheets();
-        const response = await sheets.spreadsheets.values.get({
+        const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.SCHEDULES}!A2:J`,
         });
@@ -362,8 +465,13 @@ export async function addSchedule(schedule: {
   waterPrice: number;
   participants: string[];
 }) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const id = `schedule_${Date.now()}`;
-  await sheets.spreadsheets.values.append({
+  await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.SCHEDULES}!A:J`,
     valueInputOption: 'RAW',
@@ -405,7 +513,12 @@ export async function updateSchedule(id: string, updates: Partial<{
   
   const rowIndex = scheduleIndex + 2; // +2 because of header and 0-based index
   
-  await sheets.spreadsheets.values.update({
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
+  await sheetsClient.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.SCHEDULES}!A${rowIndex}:J${rowIndex}`,
     valueInputOption: 'RAW',
@@ -434,7 +547,12 @@ export async function deleteSchedule(id: string) {
   const rowIndex = scheduleIndex + 2;
   const sheetId = await getSheetId(SHEETS.SCHEDULES);
   
-  await sheets.spreadsheets.batchUpdate({
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
+  await sheetsClient.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
       requests: [{
@@ -453,8 +571,17 @@ export async function deleteSchedule(id: string) {
 
 // Payments
 export async function getPayments() {
+  if (isBuildTime) {
+    return [];
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return [];
+  }
+  
   try {
-    const response = await sheets.spreadsheets.values.get({
+    const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.PAYMENTS}!A2:F`,
     });
@@ -470,7 +597,7 @@ export async function getPayments() {
     if (error?.response?.status === 400) {
       try {
         await initializeSheets();
-        const response = await sheets.spreadsheets.values.get({
+        const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.PAYMENTS}!A2:F`,
         });
@@ -499,6 +626,11 @@ export async function addPayments(payments: Array<{
   racketShare: number;
   waterShare: number;
 }>) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const values = payments.map(p => [
     `payment_${Date.now()}_${Math.random()}`,
     p.scheduleID,
@@ -508,7 +640,7 @@ export async function addPayments(payments: Array<{
     p.waterShare,
   ]);
 
-  await sheets.spreadsheets.values.append({
+  await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.PAYMENTS}!A:F`,
     valueInputOption: 'RAW',
@@ -518,8 +650,17 @@ export async function addPayments(payments: Array<{
 
 // Funds
 export async function getFunds() {
+  if (isBuildTime) {
+    return [];
+  }
+  
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    return [];
+  }
+  
   try {
-    const response = await sheets.spreadsheets.values.get({
+    const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.FUNDS}!A2:C`,
     });
@@ -532,7 +673,7 @@ export async function getFunds() {
     if (error?.response?.status === 400) {
       try {
         await initializeSheets();
-        const response = await sheets.spreadsheets.values.get({
+        const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.FUNDS}!A2:C`,
         });
@@ -552,8 +693,13 @@ export async function getFunds() {
 }
 
 export async function addFund(fund: { memberID: string; amount: number }) {
+  const sheetsClient = getSheets();
+  if (!sheetsClient) {
+    throw new Error('Google Sheets not initialized');
+  }
+  
   const id = `fund_${Date.now()}`;
-  await sheets.spreadsheets.values.append({
+  await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.FUNDS}!A:C`,
     valueInputOption: 'RAW',

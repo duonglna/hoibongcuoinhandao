@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
 
-    const thisWeekSchedules = schedules.filter(schedule => {
+    const thisWeekSchedules = schedules.filter((schedule: any) => {
       try {
         const scheduleDate = parseISO(schedule.date);
         return isWithinInterval(scheduleDate, { start: weekStart, end: weekEnd }) &&
@@ -31,10 +31,10 @@ export async function GET(request: Request) {
       }
     });
 
-    const schedulesWithCourtInfo = thisWeekSchedules.map(schedule => {
-      const court = courts.find(c => c.id === schedule.courtID);
+    const schedulesWithCourtInfo = thisWeekSchedules.map((schedule: any) => {
+      const court = courts.find((c: any) => c.id === schedule.courtID);
       const memberPayment = payments.find(
-        p => p.scheduleID === schedule.id && p.memberID === memberID
+        (p: any) => p.scheduleID === schedule.id && p.memberID === memberID
       );
       
       return {

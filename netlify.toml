@@ -7,4 +7,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NEXT_PHASE = "phase-production-build"
+
+[context.production.environment]
+  SECRETS_SCAN_ENABLED = "false"
 

@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { scheduleID, racketParticipants, waterParticipants } = await request.json();
     
     const schedules = await getSchedules();
-    const schedule = schedules.find(s => s.id === scheduleID);
+    const schedule = schedules.find((s: any) => s.id === scheduleID);
     
     if (!schedule) {
       return NextResponse.json({ error: 'Schedule not found' }, { status: 404 });
