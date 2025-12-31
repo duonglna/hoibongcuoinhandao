@@ -40,12 +40,16 @@ function getAuth() {
     }
     
     // Ensure proper line breaks around BEGIN/END markers
-    if (!privateKey.includes('\n-----BEGIN')) {
+    // Don't add extra newlines if they already exist
+    if (!privateKey.match(/-----BEGIN PRIVATE KEY-----\n/)) {
       privateKey = privateKey.replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n');
     }
-    if (!privateKey.includes('-----END\n')) {
+    if (!privateKey.match(/\n-----END PRIVATE KEY-----/)) {
       privateKey = privateKey.replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
     }
+    
+    // Clean up any double newlines
+    privateKey = privateKey.replace(/\n\n+/g, '\n');
     
     // Ensure it starts and ends with proper markers
     if (!privateKey.includes('BEGIN PRIVATE KEY')) {
