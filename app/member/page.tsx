@@ -100,6 +100,13 @@ export default function MemberPage() {
         payments: Array.isArray(paymentsData) ? paymentsData.length : 0,
       });
       
+      console.log('Schedules data:', schedulesData);
+      console.log('Schedules response status:', schedulesRes.status);
+      if (!schedulesRes.ok) {
+        const errorText = await schedulesRes.text();
+        console.error('Schedules API error:', errorText);
+      }
+      
       setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
       setMembers(Array.isArray(membersData) ? membersData : []);
       setFunds(Array.isArray(fundsData) ? fundsData : []);

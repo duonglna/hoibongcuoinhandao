@@ -605,19 +605,61 @@ export async function getSchedules() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.SCHEDULES}!A2:K`,
     });
-    return (response.data.values || []).map((row: any, index: number) => ({
-      id: row[0] || `schedule_${Date.now()}_${index}`,
-      courtID: row[1] || '',
-      date: row[2] || '',
-      startTime: row[3] || '',
-      hours: parseFloat(row[4] || '1'),
-      numberOfCourts: parseFloat(row[5] || '1'),
-      courtPrice: parseFloat(row[6] || '0'),
-      racketPrice: parseFloat(row[7] || '0'),
-      waterPrice: parseFloat(row[8] || '0'),
-      participants: row[9] ? row[9].split(',').filter(Boolean) : [],
-      status: row[10] || 'pending', // pending, done
-    }));
+    
+    console.log('getSchedules - Raw response:', {
+      hasValues: !!response.data.values,
+      valuesLength: response.data.values?.length || 0,
+      firstRow: response.data.values?.[0],
+    });
+    
+    const schedules = (response.data.values || []).map((row: any, index: number) => {
+      // Handle both old format (without numberOfCourts) and new format (with numberOfCourts)
+      // Old format: ID, CourtID, Date, StartTime, Hours, CourtPrice, RacketPrice, WaterPrice, Participants, Status (10 columns)
+      // New format: ID, CourtID, Date, StartTime, Hours, NumberOfCourts, CourtPrice, RacketPrice, WaterPrice, Participants, Status (11 columns)
+      
+      let schedule;
+      if (row.length >= 11) {
+        // New format with numberOfCourts
+        schedule = {
+          id: row[0] || `schedule_${Date.now()}_${index}`,
+          courtID: row[1] || '',
+          date: row[2] || '',
+          startTime: row[3] || '',
+          hours: parseFloat(row[4] || '1'),
+          numberOfCourts: parseFloat(row[5] || '1'),
+          courtPrice: parseFloat(row[6] || '0'),
+          racketPrice: parseFloat(row[7] || '0'),
+          waterPrice: parseFloat(row[8] || '0'),
+          participants: row[9] ? row[9].split(',').filter(Boolean) : [],
+          status: row[10] || 'pending',
+        };
+      } else if (row.length >= 10) {
+        // Old format without numberOfCourts
+        schedule = {
+          id: row[0] || `schedule_${Date.now()}_${index}`,
+          courtID: row[1] || '',
+          date: row[2] || '',
+          startTime: row[3] || '',
+          hours: parseFloat(row[4] || '1'),
+          numberOfCourts: 1, // Default to 1 for old data
+          courtPrice: parseFloat(row[5] || '0'),
+          racketPrice: parseFloat(row[6] || '0'),
+          waterPrice: parseFloat(row[7] || '0'),
+          participants: row[8] ? row[8].split(',').filter(Boolean) : [],
+          status: row[9] || 'pending',
+        };
+      } else {
+        // Invalid row, skip
+        console.warn(`getSchedules - Row ${index} has invalid length: ${row.length}`, row);
+        return null;
+      }
+      
+      console.log(`getSchedules - Parsed schedule ${index}:`, schedule);
+      return schedule;
+    }).filter(Boolean); // Remove null entries
+    
+    console.log('getSchedules - Returning schedules count:', schedules.length);
+    return schedules;
   } catch (error: any) {
     if (error?.response?.status === 400 || error?.code === 400) {
       try {
