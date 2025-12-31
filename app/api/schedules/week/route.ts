@@ -57,7 +57,8 @@ export async function GET() {
     } else {
       console.log('WARNING: No pending schedules found!');
       if (schedules.length > 0) {
-        console.log('All unique statuses found:', [...new Set(schedules.map((s: any) => s.status))]);
+        const uniqueStatuses = Array.from(new Set(schedules.map((s: any) => s.status)));
+        console.log('All unique statuses found:', uniqueStatuses);
       }
     }
 
