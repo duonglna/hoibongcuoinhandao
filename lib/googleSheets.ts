@@ -71,9 +71,11 @@ export async function initializeSheets() {
 
     const existingSheets = spreadsheet.data.sheets?.map((s: any) => s.properties?.title) || [];
     
-    const sheetsToCreate = Object.values(SHEETS).filter(name => !existingSheets.includes(name));
+    const sheetsToCreate = Object.values(SHEETS).filter((name: string) => !existingSheets.includes(name));
     
+    // Create missing sheets
     if (sheetsToCreate.length > 0) {
+      console.log('Creating sheets:', sheetsToCreate);
       await sheetsClient.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
@@ -84,56 +86,68 @@ export async function initializeSheets() {
           })),
         },
       });
-
-      // Add headers
-      await Promise.all([
-        sheetsClient.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.MEMBERS}!A1:D1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['ID', 'Name', 'Phone', 'Email']],
-          },
-        }),
-        sheetsClient.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.COURTS}!A1:F1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['ID', 'Name', 'Address', 'GoogleMapLink', 'PricePerHour', 'Active']],
-          },
-        }),
-        sheetsClient.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.SCHEDULES}!A1:J1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
-          },
-        }),
-        sheetsClient.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.PAYMENTS}!A1:F1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['ID', 'ScheduleID', 'MemberID', 'CourtShare', 'RacketShare', 'WaterShare']],
-          },
-        }),
-        sheetsClient.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.FUNDS}!A1:C1`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [['ID', 'MemberID', 'Amount']],
-          },
-        }),
-      ]);
+      
+      // Wait a bit for sheets to be created
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+
+    // Always add/update headers for all sheets (in case headers are missing)
+    console.log('Adding headers to all sheets...');
+    const headerUpdates = await Promise.allSettled([
+      sheetsClient.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.MEMBERS}!A1:D1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['ID', 'Name', 'Phone', 'Email']],
+        },
+      }),
+      sheetsClient.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.COURTS}!A1:F1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['ID', 'Name', 'Address', 'GoogleMapLink', 'PricePerHour', 'Active']],
+        },
+      }),
+      sheetsClient.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.SCHEDULES}!A1:J1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
+        },
+      }),
+      sheetsClient.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.PAYMENTS}!A1:F1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['ID', 'ScheduleID', 'MemberID', 'CourtShare', 'RacketShare', 'WaterShare']],
+        },
+      }),
+      sheetsClient.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.FUNDS}!A1:C1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [['ID', 'MemberID', 'Amount']],
+        },
+      }),
+    ]);
+    
+    // Log any failures
+    headerUpdates.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to add headers for sheet ${Object.values(SHEETS)[index]}:`, result.reason);
+      }
+    });
+    
+    console.log('Sheets initialization completed');
   } catch (error: any) {
-    console.error('Error initializing sheets:', error);
-    // Không throw error, chỉ log để tránh crash app
-    // Các hàm get* sẽ tự động retry khi cần
-    return;
+    console.error('Error initializing sheets:', error?.message || error);
+    // Re-throw để API route biết có lỗi
+    throw error;
   }
 }
 

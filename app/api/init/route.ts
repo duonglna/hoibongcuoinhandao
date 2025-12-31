@@ -4,20 +4,34 @@ import { initializeSheets } from '@/lib/googleSheets';
 export async function GET() {
   try {
     await initializeSheets();
-    return NextResponse.json({ success: true, message: 'Sheets initialized successfully' });
-  } catch (error) {
-    console.error('Error initializing sheets:', error);
-    return NextResponse.json({ error: 'Failed to initialize sheets' }, { status: 500 });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Sheets initialized successfully',
+      sheets: ['Members', 'Courts', 'Schedules', 'Payments', 'Funds']
+    });
+  } catch (error: any) {
+    console.error('Error initializing sheets:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Failed to initialize sheets',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 
 export async function POST() {
   try {
     await initializeSheets();
-    return NextResponse.json({ success: true, message: 'Sheets initialized successfully' });
-  } catch (error) {
-    console.error('Error initializing sheets:', error);
-    return NextResponse.json({ error: 'Failed to initialize sheets' }, { status: 500 });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Sheets initialized successfully',
+      sheets: ['Members', 'Courts', 'Schedules', 'Payments', 'Funds']
+    });
+  } catch (error: any) {
+    console.error('Error initializing sheets:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Failed to initialize sheets',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 
