@@ -12,7 +12,11 @@ export async function GET() {
     
     console.log('=== API /api/schedules/week ===');
     console.log('Total schedules from getSchedules:', schedules.length);
-    console.log('Schedules data:', JSON.stringify(schedules.slice(0, 2), null, 2));
+    if (schedules.length > 0) {
+      console.log('First schedule sample:', JSON.stringify(schedules[0], null, 2));
+    } else {
+      console.log('WARNING: getSchedules() returned empty array!');
+    }
     
     const now = new Date();
     console.log('Current time:', now.toISOString());
