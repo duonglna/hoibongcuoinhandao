@@ -116,11 +116,14 @@ export async function GET() {
       courtName: s.court?.name || 'NOT FOUND',
     })));
 
+    console.log('Final response: returning', schedulesWithCourtInfo.length, 'schedules');
     return NextResponse.json(schedulesWithCourtInfo);
   } catch (error: any) {
     console.error('API Error getting week schedules:', error?.message || error);
+    console.error('Error stack:', error?.stack);
     return NextResponse.json({ 
       error: 'Failed to get schedules',
+      message: error?.message || 'Unknown error',
       details: process.env.NODE_ENV === 'development' ? error?.message : undefined
     }, { status: 500 });
   }

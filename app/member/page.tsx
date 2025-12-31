@@ -88,10 +88,45 @@ export default function MemberPage() {
         console.error('Failed to fetch payments:', paymentsRes.status);
       }
       
-      const schedulesData = schedulesRes.ok ? await schedulesRes.json() : [];
-      const membersData = membersRes.ok ? await membersRes.json() : [];
-      const fundsData = fundsRes.ok ? await fundsRes.json() : [];
-      const paymentsData = paymentsRes.ok ? await paymentsRes.json() : [];
+      let schedulesData = [];
+      let membersData = [];
+      let fundsData = [];
+      let paymentsData = [];
+      
+      try {
+        if (schedulesRes.ok) {
+          schedulesData = await schedulesRes.json();
+        } else {
+          const errorText = await schedulesRes.text();
+          console.error('Schedules API error:', schedulesRes.status, errorText);
+        }
+      } catch (error) {
+        console.error('Error parsing schedules response:', error);
+      }
+      
+      try {
+        if (membersRes.ok) {
+          membersData = await membersRes.json();
+        }
+      } catch (error) {
+        console.error('Error parsing members response:', error);
+      }
+      
+      try {
+        if (fundsRes.ok) {
+          fundsData = await fundsRes.json();
+        }
+      } catch (error) {
+        console.error('Error parsing funds response:', error);
+      }
+      
+      try {
+        if (paymentsRes.ok) {
+          paymentsData = await paymentsRes.json();
+        }
+      } catch (error) {
+        console.error('Error parsing payments response:', error);
+      }
       
       console.log('Fetched data:', {
         schedules: Array.isArray(schedulesData) ? schedulesData.length : 0,
@@ -102,10 +137,7 @@ export default function MemberPage() {
       
       console.log('Schedules data:', schedulesData);
       console.log('Schedules response status:', schedulesRes.status);
-      if (!schedulesRes.ok) {
-        const errorText = await schedulesRes.text();
-        console.error('Schedules API error:', errorText);
-      }
+      console.log('Schedules response ok:', schedulesRes.ok);
       
       setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
       setMembers(Array.isArray(membersData) ? membersData : []);
