@@ -50,12 +50,17 @@ ADMIN_PASSWORD=abc123
 
 ## Bước 4: Khởi tạo Google Sheets (nếu chưa có)
 
-Sau khi deploy, truy cập:
+Sau khi deploy, truy cập URL này một lần để tạo các sheet cần thiết:
 ```
 https://your-site.netlify.app/api/init
 ```
 
-Hoặc gọi API này một lần để tạo các sheet cần thiết.
+Hoặc dùng curl:
+```bash
+curl https://your-site.netlify.app/api/init
+```
+
+API này sẽ tự động tạo các sheet: Members, Courts, Schedules, Payments, Funds với headers phù hợp.
 
 ## Bước 5: Kiểm tra
 
