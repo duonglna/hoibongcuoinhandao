@@ -22,43 +22,69 @@ export async function GET() {
     console.log('Current time:', now.toISOString());
 
     // Filter schedules that haven't ended yet (end time = startTime + hours)
+    // For debugging: temporarily return all schedules to see if getSchedules() works
     const activeSchedules = schedules.filter((schedule: any) => {
       try {
         if (!schedule.date) {
-          console.log(`Schedule ${schedule.id} has no date`);
+          console.log(`[FILTER] Schedule ${schedule.id} has no date`);
+          return false;
+        }
+        
+        if (!schedule.startTime) {
+          console.log(`[FILTER] Schedule ${schedule.id} has no startTime`);
           return false;
         }
         
         // Parse date - handle YYYY-MM-DD format
         let scheduleDate: Date;
         try {
+          // parseISO expects ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
           scheduleDate = parseISO(schedule.date);
+          // If parseISO returns invalid date, try new Date
+          if (isNaN(scheduleDate.getTime())) {
+            scheduleDate = new Date(schedule.date);
+          }
         } catch {
           scheduleDate = new Date(schedule.date);
         }
         
         if (isNaN(scheduleDate.getTime())) {
-          console.log(`Schedule ${schedule.id} has invalid date: ${schedule.date}`);
+          console.log(`[FILTER] Schedule ${schedule.id} has invalid date: ${schedule.date}`);
           return false;
         }
         
-        // Parse start time
-        const [startHours, startMinutes] = (schedule.startTime || '00:00').split(':').map(Number);
+        // Parse start time (format: HH:mm)
+        const timeParts = (schedule.startTime || '00:00').split(':');
+        if (timeParts.length !== 2) {
+          console.log(`[FILTER] Schedule ${schedule.id} has invalid startTime format: ${schedule.startTime}`);
+          return false;
+        }
+        
+        const startHours = parseInt(timeParts[0], 10);
+        const startMinutes = parseInt(timeParts[1], 10);
+        
+        if (isNaN(startHours) || isNaN(startMinutes)) {
+          console.log(`[FILTER] Schedule ${schedule.id} has invalid startTime: ${schedule.startTime}`);
+          return false;
+        }
+        
+        // Create start datetime (local time)
         const scheduleStartDateTime = new Date(scheduleDate);
         scheduleStartDateTime.setHours(startHours, startMinutes, 0, 0);
         
         // Calculate end time (start time + hours)
         const scheduleEndDateTime = new Date(scheduleStartDateTime);
-        scheduleEndDateTime.setHours(scheduleStartDateTime.getHours() + (schedule.hours || 1));
+        const hours = parseFloat(schedule.hours) || 1;
+        scheduleEndDateTime.setTime(scheduleStartDateTime.getTime() + (hours * 60 * 60 * 1000));
         
         // Check if schedule hasn't ended yet (end time is in the future)
         const hasNotEnded = scheduleEndDateTime.getTime() > now.getTime();
         
-        console.log(`Schedule ${schedule.id}: date=${schedule.date}, startTime=${schedule.startTime}, hours=${schedule.hours}, endTime=${scheduleEndDateTime.toISOString()}, now=${now.toISOString()}, hasNotEnded=${hasNotEnded}`);
+        console.log(`[FILTER] Schedule ${schedule.id}: date=${schedule.date}, startTime=${schedule.startTime}, hours=${hours}, startDT=${scheduleStartDateTime.toISOString()}, endDT=${scheduleEndDateTime.toISOString()}, now=${now.toISOString()}, hasNotEnded=${hasNotEnded}`);
         
         return hasNotEnded;
       } catch (error: any) {
-        console.error(`Error parsing schedule ${schedule.id}:`, error?.message);
+        console.error(`[FILTER] Error parsing schedule ${schedule.id}:`, error?.message, error);
         return false;
       }
     });
