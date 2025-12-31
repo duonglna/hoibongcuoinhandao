@@ -1,0 +1,580 @@
+import { google } from 'googleapis';
+
+const auth = new google.auth.GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+
+const sheets = google.sheets({ version: 'v4', auth });
+const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || '';
+
+// Sheet names
+const SHEETS = {
+  MEMBERS: 'Members',
+  COURTS: 'Courts',
+  SCHEDULES: 'Schedules',
+  PAYMENTS: 'Payments',
+  FUNDS: 'Funds',
+};
+
+// Initialize sheets if they don't exist
+export async function initializeSheets() {
+  try {
+    // Check if sheets exist and create if needed
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const existingSheets = spreadsheet.data.sheets?.map(s => s.properties?.title) || [];
+    
+    const sheetsToCreate = Object.values(SHEETS).filter(name => !existingSheets.includes(name));
+    
+    if (sheetsToCreate.length > 0) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: sheetsToCreate.map(name => ({
+            addSheet: {
+              properties: { title: name },
+            },
+          })),
+        },
+      });
+
+      // Add headers
+      await Promise.all([
+        sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.MEMBERS}!A1:D1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'Name', 'Phone', 'Email']],
+          },
+        }),
+        sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.COURTS}!A1:F1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'Name', 'Address', 'GoogleMapLink', 'PricePerHour', 'Active']],
+          },
+        }),
+        sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.SCHEDULES}!A1:J1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
+          },
+        }),
+        sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.PAYMENTS}!A1:F1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'ScheduleID', 'MemberID', 'CourtShare', 'RacketShare', 'WaterShare']],
+          },
+        }),
+        sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.FUNDS}!A1:C1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'MemberID', 'Amount']],
+          },
+        }),
+      ]);
+    }
+  } catch (error) {
+    console.error('Error initializing sheets:', error);
+  }
+}
+
+// Members
+export async function getMembers() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.MEMBERS}!A2:D`,
+    });
+    return (response.data.values || []).map((row, index) => ({
+      id: row[0] || `member_${Date.now()}_${index}`,
+      name: row[1] || '',
+      phone: row[2] || undefined,
+      email: row[3] || undefined,
+    }));
+  } catch (error: any) {
+    // If sheet doesn't exist (400 error), try to initialize
+    if (error?.response?.status === 400) {
+      console.log('Sheet may not exist, initializing...');
+      try {
+        await initializeSheets();
+        // Try again after initialization
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.MEMBERS}!A2:D`,
+        });
+        return (response.data.values || []).map((row, index) => ({
+          id: row[0] || `member_${Date.now()}_${index}`,
+          name: row[1] || '',
+          phone: row[2] || undefined,
+          email: row[3] || undefined,
+        }));
+      } catch (initError) {
+        console.error('Error initializing or getting members:', initError);
+        return [];
+      }
+    }
+    console.error('Error getting members:', error);
+    return [];
+  }
+}
+
+export async function addMember(member: { name: string; phone?: string; email?: string }) {
+  const id = `member_${Date.now()}`;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.MEMBERS}!A:D`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[id, member.name, member.phone || '', member.email || '']],
+    },
+  });
+  return id;
+}
+
+export async function updateMember(id: string, member: { name: string; phone?: string; email?: string }) {
+  const members = await getMembers();
+  const memberIndex = members.findIndex(m => m.id === id);
+  if (memberIndex === -1) throw new Error('Member not found');
+
+  const rowIndex = memberIndex + 2; // +2 because of header and 0-based index
+  
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.MEMBERS}!A${rowIndex}:D${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[id, member.name, member.phone || '', member.email || '']],
+    },
+  });
+}
+
+export async function deleteMember(id: string) {
+  const members = await getMembers();
+  const memberIndex = members.findIndex(m => m.id === id);
+  if (memberIndex === -1) throw new Error('Member not found');
+
+  const rowIndex = memberIndex + 2;
+  
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId: await getSheetId(SHEETS.MEMBERS),
+            dimension: 'ROWS',
+            startIndex: rowIndex - 1,
+            endIndex: rowIndex,
+          },
+        },
+      }],
+    },
+  });
+}
+
+async function getSheetId(sheetName: string): Promise<number> {
+  const spreadsheet = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
+  const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
+  if (!sheet?.properties?.sheetId) throw new Error(`Sheet ${sheetName} not found`);
+  return sheet.properties.sheetId;
+}
+
+// Courts
+export async function getCourts() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.COURTS}!A2:F`,
+    });
+    return (response.data.values || []).map((row, index) => ({
+      id: row[0] || `court_${Date.now()}_${index}`,
+      name: row[1] || '',
+      address: row[2] || '',
+      googleMapLink: row[3] || '',
+      pricePerHour: parseFloat(row[4] || '0'),
+      active: row[5] === 'TRUE' || row[5] === 'true',
+    }));
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      try {
+        await initializeSheets();
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.COURTS}!A2:F`,
+        });
+        return (response.data.values || []).map((row, index) => ({
+          id: row[0] || `court_${Date.now()}_${index}`,
+          name: row[1] || '',
+          address: row[2] || '',
+          googleMapLink: row[3] || '',
+          pricePerHour: parseFloat(row[4] || '0'),
+          active: row[5] === 'TRUE' || row[5] === 'true',
+        }));
+      } catch (initError) {
+        console.error('Error initializing or getting courts:', initError);
+        return [];
+      }
+    }
+    console.error('Error getting courts:', error);
+    return [];
+  }
+}
+
+export async function addCourt(court: {
+  name: string;
+  address: string;
+  googleMapLink: string;
+  pricePerHour: number;
+}) {
+  const id = `court_${Date.now()}`;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.COURTS}!A:F`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[id, court.name, court.address, court.googleMapLink, court.pricePerHour, 'TRUE']],
+    },
+  });
+  return id;
+}
+
+export async function updateCourt(id: string, court: {
+  name: string;
+  address: string;
+  googleMapLink: string;
+  pricePerHour: number;
+  active?: boolean;
+}) {
+  const courts = await getCourts();
+  const courtIndex = courts.findIndex(c => c.id === id);
+  if (courtIndex === -1) throw new Error('Court not found');
+
+  const rowIndex = courtIndex + 2;
+  
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.COURTS}!A${rowIndex}:F${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[id, court.name, court.address, court.googleMapLink, court.pricePerHour, court.active !== false ? 'TRUE' : 'FALSE']],
+    },
+  });
+}
+
+export async function deleteCourt(id: string) {
+  const courts = await getCourts();
+  const courtIndex = courts.findIndex(c => c.id === id);
+  if (courtIndex === -1) throw new Error('Court not found');
+
+  const rowIndex = courtIndex + 2;
+  const sheetId = await getSheetId(SHEETS.COURTS);
+  
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: rowIndex - 1,
+            endIndex: rowIndex,
+          },
+        },
+      }],
+    },
+  });
+}
+
+// Schedules
+export async function getSchedules() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.SCHEDULES}!A2:J`,
+    });
+    return (response.data.values || []).map((row, index) => ({
+      id: row[0] || `schedule_${Date.now()}_${index}`,
+      courtID: row[1] || '',
+      date: row[2] || '',
+      startTime: row[3] || '',
+      hours: parseFloat(row[4] || '1'),
+      courtPrice: parseFloat(row[5] || '0'),
+      racketPrice: parseFloat(row[6] || '0'),
+      waterPrice: parseFloat(row[7] || '0'),
+      participants: row[8] ? row[8].split(',').filter(Boolean) : [],
+      status: row[9] || 'pending', // pending, done
+    }));
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      try {
+        await initializeSheets();
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.SCHEDULES}!A2:J`,
+        });
+        return (response.data.values || []).map((row, index) => ({
+          id: row[0] || `schedule_${Date.now()}_${index}`,
+          courtID: row[1] || '',
+          date: row[2] || '',
+          startTime: row[3] || '',
+          hours: parseFloat(row[4] || '1'),
+          courtPrice: parseFloat(row[5] || '0'),
+          racketPrice: parseFloat(row[6] || '0'),
+          waterPrice: parseFloat(row[7] || '0'),
+          participants: row[8] ? row[8].split(',').filter(Boolean) : [],
+          status: row[9] || 'pending',
+        }));
+      } catch (initError) {
+        console.error('Error initializing or getting schedules:', initError);
+        return [];
+      }
+    }
+    console.error('Error getting schedules:', error);
+    return [];
+  }
+}
+
+export async function addSchedule(schedule: {
+  courtID: string;
+  date: string;
+  startTime: string;
+  hours: number;
+  courtPrice: number;
+  racketPrice: number;
+  waterPrice: number;
+  participants: string[];
+}) {
+  const id = `schedule_${Date.now()}`;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.SCHEDULES}!A:J`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[
+        id,
+        schedule.courtID,
+        schedule.date,
+        schedule.startTime,
+        schedule.hours,
+        schedule.courtPrice,
+        schedule.racketPrice,
+        schedule.waterPrice,
+        schedule.participants.join(','),
+        'pending',
+      ]],
+    },
+  });
+  return id;
+}
+
+export async function updateSchedule(id: string, updates: Partial<{
+  courtID?: string;
+  date?: string;
+  startTime?: string;
+  hours?: number;
+  courtPrice?: number;
+  racketPrice?: number;
+  waterPrice?: number;
+  participants?: string[];
+  status?: string;
+}>) {
+  const schedules = await getSchedules();
+  const scheduleIndex = schedules.findIndex(s => s.id === id);
+  if (scheduleIndex === -1) throw new Error('Schedule not found');
+
+  const schedule = schedules[scheduleIndex];
+  const updated = { ...schedule, ...updates };
+  
+  const rowIndex = scheduleIndex + 2; // +2 because of header and 0-based index
+  
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.SCHEDULES}!A${rowIndex}:J${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[
+        updated.id,
+        updated.courtID,
+        updated.date,
+        updated.startTime,
+        updated.hours,
+        updated.courtPrice,
+        updated.racketPrice,
+        updated.waterPrice,
+        updated.participants.join(','),
+        updated.status,
+      ]],
+    },
+  });
+}
+
+export async function deleteSchedule(id: string) {
+  const schedules = await getSchedules();
+  const scheduleIndex = schedules.findIndex(s => s.id === id);
+  if (scheduleIndex === -1) throw new Error('Schedule not found');
+
+  const rowIndex = scheduleIndex + 2;
+  const sheetId = await getSheetId(SHEETS.SCHEDULES);
+  
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: rowIndex - 1,
+            endIndex: rowIndex,
+          },
+        },
+      }],
+    },
+  });
+}
+
+// Payments
+export async function getPayments() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.PAYMENTS}!A2:F`,
+    });
+    return (response.data.values || []).map((row) => ({
+      id: row[0] || '',
+      scheduleID: row[1] || '',
+      memberID: row[2] || '',
+      courtShare: parseFloat(row[3] || '0'),
+      racketShare: parseFloat(row[4] || '0'),
+      waterShare: parseFloat(row[5] || '0'),
+    }));
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      try {
+        await initializeSheets();
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.PAYMENTS}!A2:F`,
+        });
+        return (response.data.values || []).map((row) => ({
+          id: row[0] || '',
+          scheduleID: row[1] || '',
+          memberID: row[2] || '',
+          courtShare: parseFloat(row[3] || '0'),
+          racketShare: parseFloat(row[4] || '0'),
+          waterShare: parseFloat(row[5] || '0'),
+        }));
+      } catch (initError) {
+        console.error('Error initializing or getting payments:', initError);
+        return [];
+      }
+    }
+    console.error('Error getting payments:', error);
+    return [];
+  }
+}
+
+export async function addPayments(payments: Array<{
+  scheduleID: string;
+  memberID: string;
+  courtShare: number;
+  racketShare: number;
+  waterShare: number;
+}>) {
+  const values = payments.map(p => [
+    `payment_${Date.now()}_${Math.random()}`,
+    p.scheduleID,
+    p.memberID,
+    p.courtShare,
+    p.racketShare,
+    p.waterShare,
+  ]);
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.PAYMENTS}!A:F`,
+    valueInputOption: 'RAW',
+    requestBody: { values },
+  });
+}
+
+// Funds
+export async function getFunds() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.FUNDS}!A2:C`,
+    });
+    return (response.data.values || []).map((row) => ({
+      id: row[0] || '',
+      memberID: row[1] || '',
+      amount: parseFloat(row[2] || '0'),
+    }));
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      try {
+        await initializeSheets();
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.FUNDS}!A2:C`,
+        });
+        return (response.data.values || []).map((row) => ({
+          id: row[0] || '',
+          memberID: row[1] || '',
+          amount: parseFloat(row[2] || '0'),
+        }));
+      } catch (initError) {
+        console.error('Error initializing or getting funds:', initError);
+        return [];
+      }
+    }
+    console.error('Error getting funds:', error);
+    return [];
+  }
+}
+
+export async function addFund(fund: { memberID: string; amount: number }) {
+  const id = `fund_${Date.now()}`;
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.FUNDS}!A:C`,
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[id, fund.memberID, fund.amount]],
+    },
+  });
+  return id;
+}
+
+export async function getMemberBalance(memberID: string) {
+  const [funds, payments] = await Promise.all([getFunds(), getPayments()]);
+  
+  const totalFunds = funds
+    .filter(f => f.memberID === memberID)
+    .reduce((sum, f) => sum + f.amount, 0);
+  
+  const totalPayments = payments
+    .filter(p => p.memberID === memberID)
+    .reduce((sum, p) => sum + p.courtShare + p.racketShare + p.waterShare, 0);
+  
+  return totalFunds - totalPayments;
+}
+
