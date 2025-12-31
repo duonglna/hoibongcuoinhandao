@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getSchedules, getCourts } from '@/lib/googleSheets';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Get schedules and courts - same way as /api/schedules
-    const schedules = await getSchedules();
-    const courts = await getCourts();
+    // Fetch from internal APIs instead of calling functions directly
+    const baseUrl = request.headers.get('host') 
+      ? `${request.headers.get('x-forwarded-proto') || 'https'}://${request.headers.get('host')}`
+      : 'http://localhost:3000';
+    
+    const [schedulesRes, courtsRes] = await Promise.all([
+      fetch(`${baseUrl}/api/schedules`),
+      fetch(`${baseUrl}/api/courts`),
+    ]);
+    
+    if (!schedulesRes.ok || !courtsRes.ok) {
+      throw new Error('Failed to fetch from internal APIs');
+    }
+    
+    const schedules = await schedulesRes.json();
+    const courts = await courtsRes.json();
     
     // Filter schedules with status "pending"
     const pendingSchedules = schedules.filter((schedule: any) => {
