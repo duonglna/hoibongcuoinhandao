@@ -194,14 +194,14 @@ export async function initializeSheets() {
           values: [['ID', 'Name', 'Address', 'GoogleMapLink', 'PricePerHour', 'Active']],
         },
       }),
-      sheetsClient.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEETS.SCHEDULES}!A1:J1`,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
-        },
-      }),
+        sheetsClient.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.SCHEDULES}!A1:K1`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['ID', 'CourtID', 'Date', 'StartTime', 'Hours', 'NumberOfCourts', 'CourtPrice', 'RacketPrice', 'WaterPrice', 'Participants', 'Status']],
+          },
+        }),
       sheetsClient.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEETS.PAYMENTS}!A1:F1`,
@@ -603,7 +603,7 @@ export async function getSchedules() {
   try {
     const response = await sheetsClient.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.SCHEDULES}!A2:J`,
+      range: `${SHEETS.SCHEDULES}!A2:K`,
     });
     return (response.data.values || []).map((row: any, index: number) => ({
       id: row[0] || `schedule_${Date.now()}_${index}`,
@@ -611,31 +611,33 @@ export async function getSchedules() {
       date: row[2] || '',
       startTime: row[3] || '',
       hours: parseFloat(row[4] || '1'),
-      courtPrice: parseFloat(row[5] || '0'),
-      racketPrice: parseFloat(row[6] || '0'),
-      waterPrice: parseFloat(row[7] || '0'),
-      participants: row[8] ? row[8].split(',').filter(Boolean) : [],
-      status: row[9] || 'pending', // pending, done
+      numberOfCourts: parseFloat(row[5] || '1'),
+      courtPrice: parseFloat(row[6] || '0'),
+      racketPrice: parseFloat(row[7] || '0'),
+      waterPrice: parseFloat(row[8] || '0'),
+      participants: row[9] ? row[9].split(',').filter(Boolean) : [],
+      status: row[10] || 'pending', // pending, done
     }));
   } catch (error: any) {
     if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
-        const response = await sheetsClient.spreadsheets.values.get({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEETS.SCHEDULES}!A2:J`,
-        });
+    const response = await sheetsClient.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.SCHEDULES}!A2:K`,
+    });
         return (response.data.values || []).map((row: any, index: number) => ({
           id: row[0] || `schedule_${Date.now()}_${index}`,
           courtID: row[1] || '',
           date: row[2] || '',
           startTime: row[3] || '',
           hours: parseFloat(row[4] || '1'),
-          courtPrice: parseFloat(row[5] || '0'),
-          racketPrice: parseFloat(row[6] || '0'),
-          waterPrice: parseFloat(row[7] || '0'),
-          participants: row[8] ? row[8].split(',').filter(Boolean) : [],
-          status: row[9] || 'pending',
+          numberOfCourts: parseFloat(row[5] || '1'),
+          courtPrice: parseFloat(row[6] || '0'),
+          racketPrice: parseFloat(row[7] || '0'),
+          waterPrice: parseFloat(row[8] || '0'),
+          participants: row[9] ? row[9].split(',').filter(Boolean) : [],
+          status: row[10] || 'pending',
         }));
       } catch (initError) {
         console.error('Error initializing or getting schedules:', initError);
@@ -652,6 +654,7 @@ export async function addSchedule(schedule: {
   date: string;
   startTime: string;
   hours: number;
+  numberOfCourts: number;
   courtPrice: number;
   racketPrice: number;
   waterPrice: number;
@@ -665,7 +668,7 @@ export async function addSchedule(schedule: {
   const id = `schedule_${Date.now()}`;
   await sheetsClient.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.SCHEDULES}!A:J`,
+    range: `${SHEETS.SCHEDULES}!A:K`,
     valueInputOption: 'RAW',
     requestBody: {
       values: [[
@@ -674,6 +677,7 @@ export async function addSchedule(schedule: {
         schedule.date,
         schedule.startTime,
         schedule.hours,
+        schedule.numberOfCourts || 1,
         schedule.courtPrice,
         schedule.racketPrice,
         schedule.waterPrice,
@@ -690,6 +694,7 @@ export async function updateSchedule(id: string, updates: Partial<{
   date?: string;
   startTime?: string;
   hours?: number;
+  numberOfCourts?: number;
   courtPrice?: number;
   racketPrice?: number;
   waterPrice?: number;
@@ -712,7 +717,7 @@ export async function updateSchedule(id: string, updates: Partial<{
   
   await sheetsClient.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.SCHEDULES}!A${rowIndex}:J${rowIndex}`,
+    range: `${SHEETS.SCHEDULES}!A${rowIndex}:K${rowIndex}`,
     valueInputOption: 'RAW',
     requestBody: {
       values: [[
@@ -721,6 +726,7 @@ export async function updateSchedule(id: string, updates: Partial<{
         updated.date,
         updated.startTime,
         updated.hours,
+        updated.numberOfCourts || 1,
         updated.courtPrice,
         updated.racketPrice,
         updated.waterPrice,

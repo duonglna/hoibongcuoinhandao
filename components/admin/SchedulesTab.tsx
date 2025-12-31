@@ -19,6 +19,7 @@ interface Schedule {
   date: string;
   startTime: string;
   hours: number;
+  numberOfCourts: number;
   courtPrice: number;
   racketPrice: number;
   waterPrice: number;
@@ -41,6 +42,7 @@ export default function SchedulesTab() {
     date: '',
     startTime: '',
     hours: 1,
+    numberOfCourts: 1,
     racketPrice: 0,
     waterPrice: 0,
     participants: [] as string[],
@@ -82,16 +84,18 @@ export default function SchedulesTab() {
     const selectedCourt = courts.find(c => c.id === formData.courtID);
     if (!selectedCourt) return;
 
-    const courtPrice = selectedCourt.pricePerHour * formData.hours;
+    // Calculate total court price: numberOfCourts * hours * pricePerHour
+    const courtPrice = formData.numberOfCourts * formData.hours * selectedCourt.pricePerHour;
 
     try {
       if (editingSchedule) {
         const response = await fetch('/api/schedules', {
-          method: 'PATCH',
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: editingSchedule.id,
             ...formData,
+            numberOfCourts: formData.numberOfCourts || 1,
             courtPrice,
           }),
         });
@@ -101,6 +105,7 @@ export default function SchedulesTab() {
             date: '',
             startTime: '',
             hours: 1,
+            numberOfCourts: 1,
             racketPrice: 0,
             waterPrice: 0,
             participants: [],
@@ -115,6 +120,7 @@ export default function SchedulesTab() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...formData,
+            numberOfCourts: formData.numberOfCourts || 1,
             courtPrice,
           }),
         });
@@ -124,6 +130,7 @@ export default function SchedulesTab() {
             date: '',
             startTime: '',
             hours: 1,
+            numberOfCourts: 1,
             racketPrice: 0,
             waterPrice: 0,
             participants: [],
@@ -144,6 +151,7 @@ export default function SchedulesTab() {
       date: schedule.date,
       startTime: schedule.startTime,
       hours: schedule.hours,
+      numberOfCourts: schedule.numberOfCourts || 1,
       racketPrice: schedule.racketPrice,
       waterPrice: schedule.waterPrice,
       participants: schedule.participants,
@@ -216,6 +224,7 @@ export default function SchedulesTab() {
               date: '',
               startTime: '',
               hours: 1,
+              numberOfCourts: 1,
               racketPrice: 0,
               waterPrice: 0,
               participants: [],
@@ -287,6 +296,20 @@ export default function SchedulesTab() {
                 required
                 min="0.5"
                 step="0.5"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số sân
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={formData.numberOfCourts}
+                onChange={(e) => setFormData({ ...formData, numberOfCourts: parseInt(e.target.value) || 1 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required
               />
             </div>
             <div>
@@ -404,6 +427,7 @@ export default function SchedulesTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-2">
                       <span>{court?.name || 'N/A'}</span>
+                      <span className="text-xs text-gray-400">({schedule.numberOfCourts || 1} sân)</span>
                       <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
                         {status.text}
                       </span>
@@ -472,7 +496,15 @@ export default function SchedulesTab() {
             <h3 className="text-xl font-semibold mb-4">Tính tiền cho lịch chơi</h3>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
+                Số sân: {selectedSchedule.numberOfCourts || 1}
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
                 Giá sân: {selectedSchedule.courtPrice.toLocaleString('vi-VN')} VNĐ
+                {selectedSchedule.numberOfCourts && selectedSchedule.numberOfCourts > 1 && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({selectedSchedule.numberOfCourts} sân × {selectedSchedule.hours} giờ × {courts.find(c => c.id === selectedSchedule.courtID)?.pricePerHour?.toLocaleString('vi-VN') || 0} VNĐ/giờ)
+                  </span>
+                )}
               </p>
               <p className="text-sm text-gray-600 mb-2">
                 Giá vợt: {selectedSchedule.racketPrice.toLocaleString('vi-VN')} VNĐ

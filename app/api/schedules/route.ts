@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PUT(request: Request) {
   try {
     const { id, ...updates } = await request.json();
     await updateSchedule(id, updates);

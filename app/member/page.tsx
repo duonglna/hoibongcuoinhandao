@@ -36,7 +36,9 @@ interface Schedule {
   date: string;
   startTime: string;
   hours: number;
+  numberOfCourts: number;
   courtPrice: number;
+  totalCourtPrice?: number; // Calculated: numberOfCourts * hours * pricePerHour
   racketPrice: number;
   waterPrice: number;
   participants: string[];
@@ -148,10 +150,12 @@ export default function MemberPage() {
       };
 
       const title = encodeURIComponent(`Chơi Pickleball - ${schedule.court?.name || 'Sân'}`);
+      const totalPrice = (schedule.totalCourtPrice || schedule.courtPrice) + schedule.racketPrice + schedule.waterPrice;
       const description = encodeURIComponent(
         `Địa chỉ: ${schedule.court?.address || ''}\n` +
+        `Số sân: ${schedule.numberOfCourts || 1}\n` +
         `Thành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\n` +
-        `Giá: ${(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ`
+        `Giá: ${totalPrice.toLocaleString('vi-VN')} VNĐ`
       );
       const location = encodeURIComponent(schedule.court?.address || '');
 
@@ -179,8 +183,9 @@ export default function MemberPage() {
         return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
       };
 
+      const totalPrice = (schedule.totalCourtPrice || schedule.courtPrice) + schedule.racketPrice + schedule.waterPrice;
       const title = `Chơi Pickleball - ${schedule.court?.name || 'Sân'}`;
-      const description = `Địa chỉ: ${schedule.court?.address || ''}\\nThành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\\nGiá: ${(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ`;
+      const description = `Địa chỉ: ${schedule.court?.address || ''}\\nSố sân: ${schedule.numberOfCourts || 1}\\nThành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\\nGiá: ${totalPrice.toLocaleString('vi-VN')} VNĐ`;
       const location = schedule.court?.address || '';
 
       const icsContent = [
@@ -324,6 +329,9 @@ export default function MemberPage() {
                         <p className="text-sm text-gray-600">
                           {new Date(schedule.date).toLocaleDateString('vi-VN')} - {schedule.startTime} ({schedule.hours} giờ)
                         </p>
+                        <p className="text-sm text-gray-600">
+                          Số sân: {schedule.numberOfCourts || 1}
+                        </p>
                         <p className="text-sm text-gray-500 mt-1">
                           Thành viên: {participantNames || 'Chưa có'}
                         </p>
@@ -390,7 +398,10 @@ export default function MemberPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Giá sân:</span>
-                          <p className="font-medium">{schedule.courtPrice.toLocaleString('vi-VN')} VNĐ</p>
+                          <p className="font-medium">{(schedule.totalCourtPrice || schedule.courtPrice).toLocaleString('vi-VN')} VNĐ</p>
+                          <p className="text-xs text-gray-500">
+                            ({schedule.numberOfCourts || 1} sân × {schedule.hours} giờ × {schedule.court?.pricePerHour?.toLocaleString('vi-VN') || 0} VNĐ/giờ)
+                          </p>
                         </div>
                         {schedule.racketPrice > 0 && (
                           <div>
@@ -407,7 +418,7 @@ export default function MemberPage() {
                         <div>
                           <span className="text-gray-600">Tổng:</span>
                           <p className="font-medium text-lg">
-                            {(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ
+                            {((schedule.totalCourtPrice || schedule.courtPrice) + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ
                           </p>
                         </div>
                       </div>
