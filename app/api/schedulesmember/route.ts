@@ -10,19 +10,11 @@ export async function GET() {
     // Filter schedules with status "pending"
     const pendingSchedules = schedules.filter((schedule: any) => {
       const status = (schedule.status || '').toString().trim().toLowerCase();
-      const isPending = status === 'pending';
-      // Debug: log if not pending
-      if (!isPending && schedules.length > 0) {
-        console.log(`Filtering out schedule ${schedule.id}: status="${schedule.status}" -> normalized="${status}"`);
-      }
-      return isPending;
+      return status === 'pending';
     });
-    
-    // If no pending schedules, return all for debugging
-    const schedulesToProcess = pendingSchedules.length > 0 ? pendingSchedules : schedules;
 
     // Join with courts
-    const schedulesWithCourtInfo = schedulesToProcess.map((schedule: any) => {
+    const schedulesWithCourtInfo = pendingSchedules.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);
       
       // Calculate total price: numberOfCourts * hours * pricePerHour
