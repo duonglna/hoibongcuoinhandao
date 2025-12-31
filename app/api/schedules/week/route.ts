@@ -12,10 +12,16 @@ export async function GET() {
     
     console.log('=== API /api/schedules/week ===');
     console.log('Total schedules from getSchedules:', schedules.length);
+    console.log('Total courts from getCourts:', courts.length);
     if (schedules.length > 0) {
       console.log('First schedule sample:', JSON.stringify(schedules[0], null, 2));
     } else {
       console.log('WARNING: getSchedules() returned empty array!');
+    }
+    if (courts.length > 0) {
+      console.log('Courts sample:', courts.map((c: any) => ({ id: c.id, name: c.name })));
+    } else {
+      console.log('WARNING: getCourts() returned empty array!');
     }
     
     const now = new Date();
@@ -112,8 +118,15 @@ export async function GET() {
       }
     });
 
+    console.log('Courts data:', courts.length, courts.map((c: any) => ({ id: c.id, name: c.name })));
+    
     const schedulesWithCourtInfo = activeSchedules.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);
+      
+      if (!court) {
+        console.warn(`[WARNING] Court not found for schedule ${schedule.id}, courtID: ${schedule.courtID}`);
+        console.log('Available courts:', courts.map((c: any) => c.id));
+      }
       
       // Calculate total price: numberOfCourts * hours * pricePerHour
       const totalCourtPrice = (schedule.numberOfCourts || 1) * (schedule.hours || 1) * (court?.pricePerHour || 0);
@@ -124,6 +137,12 @@ export async function GET() {
         totalCourtPrice, // Override courtPrice with calculated value
       };
     });
+    
+    console.log('Schedules with court info:', schedulesWithCourtInfo.map((s: any) => ({
+      id: s.id,
+      courtID: s.courtID,
+      courtName: s.court?.name || 'NOT FOUND',
+    })));
 
     return NextResponse.json(schedulesWithCourtInfo);
   } catch (error: any) {
