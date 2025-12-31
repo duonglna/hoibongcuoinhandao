@@ -8,23 +8,38 @@ export async function GET() {
   };
   
   try {
+    // Try calling sequentially instead of Promise.all
     debug.step = 'fetching-schedules';
-    const schedules = await getSchedules();
-    debug.totalSchedules = schedules.length;
-    debug.schedulesError = null;
-    
-    if (schedules.length === 0) {
-      debug.schedulesError = 'getSchedules returned empty array';
+    let schedules: any[] = [];
+    try {
+      schedules = await getSchedules();
+      debug.totalSchedules = schedules.length;
+      debug.schedulesError = null;
+    } catch (schedulesError: any) {
+      debug.schedulesError = schedulesError?.message || 'Unknown error';
+      debug.schedulesErrorStack = schedulesError?.stack;
     }
     
     debug.step = 'fetching-courts';
-    const courts = await getCourts();
-    debug.totalCourts = courts.length;
-    debug.courtsError = null;
-    
-    if (courts.length === 0) {
-      debug.courtsError = 'getCourts returned empty array';
+    let courts: any[] = [];
+    try {
+      courts = await getCourts();
+      debug.totalCourts = courts.length;
+      debug.courtsError = null;
+    } catch (courtsError: any) {
+      debug.courtsError = courtsError?.message || 'Unknown error';
+      debug.courtsErrorStack = courtsError?.stack;
     }
+    
+    // Check environment variables
+    debug.envCheck = {
+      hasSpreadsheetId: !!process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      hasClientEmail: !!process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+      hasPrivateKey: !!process.env.GOOGLE_SHEETS_PRIVATE_KEY,
+      spreadsheetIdLength: process.env.GOOGLE_SHEETS_SPREADSHEET_ID?.length || 0,
+      clientEmailLength: process.env.GOOGLE_SHEETS_CLIENT_EMAIL?.length || 0,
+      privateKeyLength: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.length || 0,
+    };
     
     if (schedules.length > 0) {
       debug.sampleSchedule = {
