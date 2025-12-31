@@ -150,7 +150,7 @@ export async function getMembers() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.MEMBERS}!A2:D`,
     });
-    return (response.data.values || []).map((row, index) => ({
+    return (response.data.values || []).map((row: any, index: number) => ({
       id: row[0] || `member_${Date.now()}_${index}`,
       name: row[1] || '',
       phone: row[2] || undefined,
@@ -167,7 +167,7 @@ export async function getMembers() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.MEMBERS}!A2:D`,
         });
-        return (response.data.values || []).map((row, index) => ({
+        return (response.data.values || []).map((row: any, index: number) => ({
           id: row[0] || `member_${Date.now()}_${index}`,
           name: row[1] || '',
           phone: row[2] || undefined,
@@ -282,7 +282,7 @@ export async function getCourts() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.COURTS}!A2:F`,
     });
-    return (response.data.values || []).map((row, index) => ({
+    return (response.data.values || []).map((row: any, index: number) => ({
       id: row[0] || `court_${Date.now()}_${index}`,
       name: row[1] || '',
       address: row[2] || '',
@@ -298,7 +298,7 @@ export async function getCourts() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.COURTS}!A2:F`,
         });
-        return (response.data.values || []).map((row, index) => ({
+        return (response.data.values || []).map((row: any, index: number) => ({
           id: row[0] || `court_${Date.now()}_${index}`,
           name: row[1] || '',
           address: row[2] || '',
@@ -413,7 +413,7 @@ export async function getSchedules() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.SCHEDULES}!A2:J`,
     });
-    return (response.data.values || []).map((row, index) => ({
+    return (response.data.values || []).map((row: any, index: number) => ({
       id: row[0] || `schedule_${Date.now()}_${index}`,
       courtID: row[1] || '',
       date: row[2] || '',
@@ -433,7 +433,7 @@ export async function getSchedules() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.SCHEDULES}!A2:J`,
         });
-        return (response.data.values || []).map((row, index) => ({
+        return (response.data.values || []).map((row: any, index: number) => ({
           id: row[0] || `schedule_${Date.now()}_${index}`,
           courtID: row[1] || '',
           date: row[2] || '',
@@ -585,7 +585,7 @@ export async function getPayments() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.PAYMENTS}!A2:F`,
     });
-    return (response.data.values || []).map((row) => ({
+    return (response.data.values || []).map((row: any) => ({
       id: row[0] || '',
       scheduleID: row[1] || '',
       memberID: row[2] || '',
@@ -601,7 +601,7 @@ export async function getPayments() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.PAYMENTS}!A2:F`,
         });
-        return (response.data.values || []).map((row) => ({
+        return (response.data.values || []).map((row: any) => ({
           id: row[0] || '',
           scheduleID: row[1] || '',
           memberID: row[2] || '',
@@ -664,7 +664,7 @@ export async function getFunds() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.FUNDS}!A2:C`,
     });
-    return (response.data.values || []).map((row) => ({
+    return (response.data.values || []).map((row: any) => ({
       id: row[0] || '',
       memberID: row[1] || '',
       amount: parseFloat(row[2] || '0'),
@@ -677,7 +677,7 @@ export async function getFunds() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.FUNDS}!A2:C`,
         });
-        return (response.data.values || []).map((row) => ({
+        return (response.data.values || []).map((row: any) => ({
           id: row[0] || '',
           memberID: row[1] || '',
           amount: parseFloat(row[2] || '0'),
