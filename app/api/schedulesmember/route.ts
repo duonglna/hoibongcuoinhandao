@@ -15,6 +15,8 @@ export async function GET() {
       schedules = await getSchedules();
       debug.totalSchedules = schedules.length;
       debug.schedulesError = null;
+      
+      
     } catch (schedulesError: any) {
       debug.schedulesError = schedulesError?.message || 'Unknown error';
       debug.schedulesErrorStack = schedulesError?.stack;
@@ -31,15 +33,24 @@ export async function GET() {
       debug.courtsErrorStack = courtsError?.stack;
     }
     
-    // Check environment variables
-    debug.envCheck = {
-      hasSpreadsheetId: !!process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      hasClientEmail: !!process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-      hasPrivateKey: !!process.env.GOOGLE_SHEETS_PRIVATE_KEY,
-      spreadsheetIdLength: process.env.GOOGLE_SHEETS_SPREADSHEET_ID?.length || 0,
-      clientEmailLength: process.env.GOOGLE_SHEETS_CLIENT_EMAIL?.length || 0,
-      privateKeyLength: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.length || 0,
-    };
+    // If both are empty, try to initialize sheets
+    if (schedules.length === 0 && courts.length === 0) {
+      debug.step = 'trying-initialize';
+      try {
+        const { initializeSheets } = await import('@/lib/googleSheets');
+        await initializeSheets();
+        debug.initializeSuccess = true;
+        
+        // Try again after initialization
+        schedules = await getSchedules();
+        courts = await getCourts();
+        debug.totalSchedulesAfterInit = schedules.length;
+        debug.totalCourtsAfterInit = courts.length;
+      } catch (initError: any) {
+        debug.initializeError = initError?.message || 'Unknown error';
+        debug.initializeErrorStack = initError?.stack;
+      }
+    }
     
     if (schedules.length > 0) {
       debug.sampleSchedule = {
