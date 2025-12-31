@@ -130,7 +130,7 @@ export default function MemberPage() {
       const title = encodeURIComponent(`Chơi Pickleball - ${schedule.court?.name || 'Sân'}`);
       const description = encodeURIComponent(
         `Địa chỉ: ${schedule.court?.address || ''}\n` +
-        `Thành viên: ${schedule.participants.map(id => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\n` +
+        `Thành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\n` +
         `Giá: ${(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ`
       );
       const location = encodeURIComponent(schedule.court?.address || '');
@@ -160,7 +160,7 @@ export default function MemberPage() {
       };
 
       const title = `Chơi Pickleball - ${schedule.court?.name || 'Sân'}`;
-      const description = `Địa chỉ: ${schedule.court?.address || ''}\\nThành viên: ${schedule.participants.map(id => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\\nGiá: ${(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ`;
+      const description = `Địa chỉ: ${schedule.court?.address || ''}\\nThành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\\nGiá: ${(schedule.courtPrice + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ`;
       const location = schedule.court?.address || '';
 
       const icsContent = [
@@ -250,7 +250,7 @@ export default function MemberPage() {
             <div className="space-y-4">
               {schedules.map((schedule) => {
                 const participantNames = schedule.participants
-                  .map(id => members.find(m => m.id === id)?.name)
+                  .map((id: string) => members.find(m => m.id === id)?.name)
                   .filter(Boolean)
                   .join(', ');
 
