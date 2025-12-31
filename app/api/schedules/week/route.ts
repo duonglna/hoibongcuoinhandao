@@ -10,9 +10,12 @@ export async function GET() {
       getPayments(),
     ]);
     
+    console.log('=== API /api/schedules/week ===');
+    console.log('Total schedules from getSchedules:', schedules.length);
+    console.log('Schedules data:', JSON.stringify(schedules.slice(0, 2), null, 2));
+    
     const now = new Date();
     console.log('Current time:', now.toISOString());
-    console.log('Total schedules from getSchedules:', schedules.length);
 
     // Filter schedules that haven't ended yet (end time = startTime + hours)
     const activeSchedules = schedules.filter((schedule: any) => {
@@ -57,6 +60,12 @@ export async function GET() {
     });
     
     console.log('Active schedules count (not ended):', activeSchedules.length);
+    console.log('Active schedules:', activeSchedules.map((s: any) => ({
+      id: s.id,
+      date: s.date,
+      startTime: s.startTime,
+      hours: s.hours,
+    })));
 
     // Sort by start date/time (earliest first)
     activeSchedules.sort((a: any, b: any) => {

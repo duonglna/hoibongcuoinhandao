@@ -592,13 +592,17 @@ export async function deleteCourt(id: string) {
 // Schedules
 export async function getSchedules() {
   if (isBuildTime) {
+    console.log('getSchedules: Build time, returning empty array');
     return [];
   }
   
   const sheetsClient = getSheets();
   if (!sheetsClient) {
+    console.error('getSchedules: sheetsClient is null');
     return [];
   }
+  
+  console.log('getSchedules: sheetsClient initialized, SPREADSHEET_ID:', SPREADSHEET_ID);
   
   try {
     const response = await sheetsClient.spreadsheets.values.get({
@@ -606,10 +610,12 @@ export async function getSchedules() {
       range: `${SHEETS.SCHEDULES}!A2:K`,
     });
     
-    console.log('getSchedules - Raw response:', {
+    console.log('=== getSchedules ===');
+    console.log('Raw response:', {
       hasValues: !!response.data.values,
       valuesLength: response.data.values?.length || 0,
       firstRow: response.data.values?.[0],
+      allRows: response.data.values,
     });
     
     const schedules = (response.data.values || []).map((row: any, index: number) => {
@@ -711,12 +717,22 @@ export async function getSchedules() {
         
         console.log('getSchedules (retry) - Returning schedules count:', schedules.length);
         return schedules;
-      } catch (initError) {
-        console.error('Error initializing or getting schedules:', initError);
+      } catch (initError: any) {
+        console.error('Error initializing or getting schedules:', initError?.message || initError);
+        console.error('Init error details:', {
+          status: initError?.response?.status,
+          code: initError?.code,
+          message: initError?.message,
+        });
         return [];
       }
     }
-    console.error('Error getting schedules:', error);
+    console.error('Error getting schedules:', error?.message || error);
+    console.error('Error details:', {
+      status: error?.response?.status,
+      code: error?.code,
+      message: error?.message,
+    });
     return [];
   }
 }
