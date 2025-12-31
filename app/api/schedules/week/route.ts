@@ -36,12 +36,25 @@ export async function GET() {
     }
     
     // Filter schedules with status "pending" only
+    // First, let's see what statuses we actually have
+    if (schedules.length > 0) {
+      console.log('All schedules with status:', schedules.map((s: any) => ({
+        id: s.id,
+        date: s.date,
+        status: s.status,
+        statusType: typeof s.status,
+        statusValue: JSON.stringify(s.status),
+      })));
+    }
+    
     const pendingSchedules = schedules.filter((schedule: any) => {
-      // Check status - handle both string and case variations
-      const status = schedule.status || schedule.Status || '';
-      const isPending = status.toLowerCase() === 'pending';
+      // Check status - handle both string and case variations, and also check for undefined/null
+      const status = (schedule.status || '').toString().trim().toLowerCase();
+      const isPending = status === 'pending';
       
-      console.log(`[FILTER] Schedule ${schedule.id}: status="${status}", type=${typeof status}, isPending=${isPending}`);
+      if (!isPending) {
+        console.log(`[FILTER OUT] Schedule ${schedule.id}: status="${schedule.status}" (normalized: "${status}")`);
+      }
       
       return isPending;
     });
