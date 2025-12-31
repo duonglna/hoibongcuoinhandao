@@ -42,7 +42,45 @@ export async function GET() {
 
     // Try to create auth
     let authError = null;
+    let detailedError = null;
     try {
+      // Try with JWT directly first
+      const jwt = require('jsonwebtoken');
+      const { JWT } = require('google-auth-library');
+      
+      try {
+        const jwtClient = new JWT({
+          email: (clientEmail || '').trim(),
+          key: privateKey,
+          scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+        
+        // Try to authorize
+        await jwtClient.authorize();
+        
+        // If successful, try to access spreadsheet
+        const sheets = google.sheets({ version: 'v4', auth: jwtClient });
+        await sheets.spreadsheets.get({
+          spreadsheetId: spreadsheetId,
+        });
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Authentication successful using JWT!',
+          method: 'JWT',
+          details: {
+            clientEmail: (clientEmail || '').substring(0, 20) + '...',
+            keyLength,
+            hasBegin,
+            hasEnd,
+            hasNewlines,
+          }
+        });
+      } catch (jwtError: any) {
+        detailedError = jwtError?.message || JSON.stringify(jwtError);
+      }
+      
+      // Fallback to GoogleAuth
       const auth = new google.auth.GoogleAuth({
         credentials: {
           client_email: (clientEmail || '').trim(),
@@ -92,12 +130,22 @@ export async function GET() {
       }
     } catch (error: any) {
       authError = error?.message || JSON.stringify(error);
+      if (!detailedError) {
+        detailedError = authError;
+      }
     }
 
     return NextResponse.json({
       success: false,
       error: 'Authentication failed',
-      authError,
+      authError: detailedError || authError,
+      possibleCauses: [
+        'Private key does not match the Service Account email',
+        'Service Account key has been revoked or deleted',
+        'Private key was copied incorrectly (missing characters)',
+        'Service Account does not have Google Sheets API enabled',
+        'Wrong Service Account is being used',
+      ],
       keyInfo: {
         length: keyLength,
         hasBegin,

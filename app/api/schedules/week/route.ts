@@ -10,18 +10,47 @@ export async function GET() {
       getPayments(),
     ]);
     
+    console.log('Total schedules:', schedules.length);
+    console.log('Sample schedule dates:', schedules.slice(0, 3).map((s: any) => s.date));
+    
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
+    
+    console.log('Week range:', {
+      start: weekStart.toISOString(),
+      end: weekEnd.toISOString(),
+      now: now.toISOString()
+    });
 
     const thisWeekSchedules = schedules.filter((schedule: any) => {
       try {
-        const scheduleDate = parseISO(schedule.date);
-        return isWithinInterval(scheduleDate, { start: weekStart, end: weekEnd });
-      } catch {
+        // Handle different date formats
+        let scheduleDate: Date;
+        if (schedule.date.includes('T')) {
+          scheduleDate = parseISO(schedule.date);
+        } else {
+          // If date is in YYYY-MM-DD format, parse it
+          scheduleDate = new Date(schedule.date);
+        }
+        
+        // Set time to start of day for comparison
+        scheduleDate.setHours(0, 0, 0, 0);
+        const start = new Date(weekStart);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(weekEnd);
+        end.setHours(23, 59, 59, 999);
+        
+        const isInWeek = isWithinInterval(scheduleDate, { start, end });
+        console.log(`Schedule ${schedule.id} (${schedule.date}): ${isInWeek ? 'IN' : 'OUT'} week`);
+        return isInWeek;
+      } catch (error: any) {
+        console.error(`Error parsing schedule date ${schedule.date}:`, error?.message);
         return false;
       }
     });
+
+    console.log('This week schedules count:', thisWeekSchedules.length);
 
     const schedulesWithCourtInfo = thisWeekSchedules.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);

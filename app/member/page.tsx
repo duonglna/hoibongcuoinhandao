@@ -73,10 +73,30 @@ export default function MemberPage() {
         fetch('/api/payments'),
       ]);
       
+      if (!schedulesRes.ok) {
+        console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
+      }
+      if (!membersRes.ok) {
+        console.error('Failed to fetch members:', membersRes.status);
+      }
+      if (!fundsRes.ok) {
+        console.error('Failed to fetch funds:', fundsRes.status);
+      }
+      if (!paymentsRes.ok) {
+        console.error('Failed to fetch payments:', paymentsRes.status);
+      }
+      
       const schedulesData = schedulesRes.ok ? await schedulesRes.json() : [];
       const membersData = membersRes.ok ? await membersRes.json() : [];
       const fundsData = fundsRes.ok ? await fundsRes.json() : [];
       const paymentsData = paymentsRes.ok ? await paymentsRes.json() : [];
+      
+      console.log('Fetched data:', {
+        schedules: Array.isArray(schedulesData) ? schedulesData.length : 0,
+        members: Array.isArray(membersData) ? membersData.length : 0,
+        funds: Array.isArray(fundsData) ? fundsData.length : 0,
+        payments: Array.isArray(paymentsData) ? paymentsData.length : 0,
+      });
       
       setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
       setMembers(Array.isArray(membersData) ? membersData : []);
