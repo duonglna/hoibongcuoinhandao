@@ -10,10 +10,13 @@ export async function GET() {
       sheets: ['Members', 'Courts', 'Schedules', 'Payments', 'Funds']
     });
   } catch (error: any) {
-    console.error('Error initializing sheets:', error?.message || error);
+    console.error('API Error initializing sheets:', error?.message || error);
+    const errorMessage = error?.message || 'Failed to initialize sheets';
     return NextResponse.json({ 
       error: 'Failed to initialize sheets',
-      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      message: errorMessage,
+      // Always show details in API response for debugging
+      details: errorMessage
     }, { status: 500 });
   }
 }
@@ -27,10 +30,13 @@ export async function POST() {
       sheets: ['Members', 'Courts', 'Schedules', 'Payments', 'Funds']
     });
   } catch (error: any) {
-    console.error('Error initializing sheets:', error?.message || error);
+    console.error('API Error initializing sheets:', error?.message || error);
+    const errorMessage = error?.message || 'Failed to initialize sheets';
     return NextResponse.json({ 
       error: 'Failed to initialize sheets',
-      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      message: errorMessage,
+      // Always show details in API response for debugging
+      details: errorMessage
     }, { status: 500 });
   }
 }

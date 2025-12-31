@@ -55,12 +55,25 @@ const SHEETS = {
 // Initialize sheets if they don't exist
 export async function initializeSheets() {
   if (isBuildTime) {
-    return; // Skip during build
+    throw new Error('Cannot initialize sheets during build time');
+  }
+  
+  // Validate environment variables
+  if (!SPREADSHEET_ID) {
+    throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID is not set');
+  }
+  
+  if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+    throw new Error('GOOGLE_SHEETS_CLIENT_EMAIL is not set');
+  }
+  
+  if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY) {
+    throw new Error('GOOGLE_SHEETS_PRIVATE_KEY is not set');
   }
   
   const sheetsClient = getSheets();
   if (!sheetsClient) {
-    return;
+    throw new Error('Failed to initialize Google Sheets client. Please check your credentials.');
   }
   
   try {
@@ -145,9 +158,28 @@ export async function initializeSheets() {
     
     console.log('Sheets initialization completed');
   } catch (error: any) {
-    console.error('Error initializing sheets:', error?.message || error);
-    // Re-throw để API route biết có lỗi
-    throw error;
+    const errorMessage = error?.message || error?.response?.data?.error?.message || JSON.stringify(error);
+    console.error('Error initializing sheets:', errorMessage);
+    console.error('Error details:', {
+      status: error?.response?.status,
+      code: error?.code,
+      message: error?.message,
+      response: error?.response?.data
+    });
+    
+    // Provide more helpful error messages
+    if (error?.response?.status === 403) {
+      throw new Error('Permission denied. Please ensure the Service Account has Editor access to the Google Sheet.');
+    }
+    if (error?.response?.status === 404) {
+      throw new Error('Spreadsheet not found. Please check GOOGLE_SHEETS_SPREADSHEET_ID.');
+    }
+    if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+      throw new Error('Cannot connect to Google Sheets API. Please check your internet connection.');
+    }
+    
+    // Re-throw với message chi tiết hơn
+    throw new Error(`Failed to initialize sheets: ${errorMessage}`);
   }
 }
 
