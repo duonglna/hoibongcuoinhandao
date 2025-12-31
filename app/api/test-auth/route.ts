@@ -45,7 +45,7 @@ export async function GET() {
     try {
       const auth = new google.auth.GoogleAuth({
         credentials: {
-          client_email: clientEmail.trim(),
+          client_email: (clientEmail || '').trim(),
           private_key: privateKey,
         },
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -67,7 +67,7 @@ export async function GET() {
             success: true,
             message: 'Authentication successful!',
             details: {
-              clientEmail: clientEmail.substring(0, 20) + '...',
+              clientEmail: (clientEmail || '').substring(0, 20) + '...',
               keyLength,
               hasBegin,
               hasEnd,
@@ -81,7 +81,7 @@ export async function GET() {
             authSuccess: true,
             sheetError: sheetError?.message || sheetError,
             details: {
-              clientEmail: clientEmail.substring(0, 20) + '...',
+              clientEmail: (clientEmail || '').substring(0, 20) + '...',
               keyLength,
               hasBegin,
               hasEnd,
