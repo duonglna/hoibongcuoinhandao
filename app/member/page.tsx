@@ -69,7 +69,7 @@ export default function MemberPage() {
   const fetchData = async () => {
     try {
       const [schedulesRes, membersRes, fundsRes, paymentsRes] = await Promise.all([
-        fetch('/api/schedules/week'),
+        fetch('/api/schedules'),
         fetch('/api/members'),
         fetch('/api/funds'),
         fetch('/api/payments'),
