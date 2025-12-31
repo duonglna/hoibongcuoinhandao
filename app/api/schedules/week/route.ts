@@ -33,8 +33,12 @@ export async function GET() {
     });
 
     return NextResponse.json(schedulesWithCourtInfo);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to get schedules' }, { status: 500 });
+  } catch (error: any) {
+    console.error('API Error getting week schedules:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Failed to get schedules',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 

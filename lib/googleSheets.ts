@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 
 // Skip Google Sheets initialization during build time
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
-                    process.env.NETLIFY === 'true' && !process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+                    (process.env.NETLIFY === 'true' && !process.env.GOOGLE_SHEETS_CLIENT_EMAIL);
 
 let auth: any = null;
 let sheets: any = null;
@@ -129,9 +129,11 @@ export async function initializeSheets() {
         }),
       ]);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error initializing sheets:', error);
-    throw error; // Re-throw để caller biết có lỗi
+    // Không throw error, chỉ log để tránh crash app
+    // Các hàm get* sẽ tự động retry khi cần
+    return;
   }
 }
 
@@ -159,10 +161,12 @@ export async function getMembers() {
     }));
   } catch (error: any) {
     // If sheet doesn't exist (400 error), try to initialize
-    if (error?.response?.status === 400) {
+    if (error?.response?.status === 400 || error?.code === 400) {
       console.log('Sheet may not exist, initializing...');
       try {
         await initializeSheets();
+        // Wait a bit for sheets to be created
+        await new Promise(resolve => setTimeout(resolve, 1000));
         // Try again after initialization
         const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
@@ -174,12 +178,12 @@ export async function getMembers() {
           phone: row[2] || undefined,
           email: row[3] || undefined,
         }));
-      } catch (initError) {
-        console.error('Error initializing or getting members:', initError);
+      } catch (initError: any) {
+        console.error('Error initializing or getting members:', initError?.message || initError);
         return [];
       }
     }
-    console.error('Error getting members:', error);
+    console.error('Error getting members:', error?.message || error);
     return [];
   }
 }
@@ -292,7 +296,7 @@ export async function getCourts() {
       active: row[5] === 'TRUE' || row[5] === 'true',
     }));
   } catch (error: any) {
-    if (error?.response?.status === 400) {
+    if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
         const response = await sheetsClient.spreadsheets.values.get({
@@ -427,7 +431,7 @@ export async function getSchedules() {
       status: row[9] || 'pending', // pending, done
     }));
   } catch (error: any) {
-    if (error?.response?.status === 400) {
+    if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
         const response = await sheetsClient.spreadsheets.values.get({
@@ -595,7 +599,7 @@ export async function getPayments() {
       waterShare: parseFloat(row[5] || '0'),
     }));
   } catch (error: any) {
-    if (error?.response?.status === 400) {
+    if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
         const response = await sheetsClient.spreadsheets.values.get({
@@ -671,7 +675,7 @@ export async function getFunds() {
       amount: parseFloat(row[2] || '0'),
     }));
   } catch (error: any) {
-    if (error?.response?.status === 400) {
+    if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
         const response = await sheetsClient.spreadsheets.values.get({

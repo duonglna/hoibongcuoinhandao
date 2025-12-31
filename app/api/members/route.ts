@@ -5,8 +5,12 @@ export async function GET() {
   try {
     const members = await getMembers();
     return NextResponse.json(members);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
+  } catch (error: any) {
+    console.error('API Error getting members:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Failed to fetch members',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 
