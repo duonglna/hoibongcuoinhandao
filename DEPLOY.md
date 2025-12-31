@@ -48,19 +48,19 @@ ADMIN_PASSWORD=abc123
 - `GOOGLE_SHEETS_PRIVATE_KEY` phải được đặt trong dấu ngoặc kép và giữ nguyên các ký tự `\n`
 - Sau khi thêm environment variables, cần **trigger một deploy mới** để áp dụng
 
-## Bước 4: Khởi tạo Google Sheets (nếu chưa có)
+## Bước 4: Khởi tạo Google Sheets (Tự động)
 
-Sau khi deploy, truy cập URL này một lần để tạo các sheet cần thiết:
+Google Sheets sẽ được tự động khởi tạo khi bạn sử dụng ứng dụng lần đầu tiên. Các sheet sẽ được tạo tự động khi:
+- Bạn thêm thành viên đầu tiên
+- Bạn thêm sân đầu tiên
+- Bạn xem lịch chơi
+
+**Không cần gọi API thủ công!** Hệ thống sẽ tự động tạo các sheet cần thiết.
+
+Nếu muốn khởi tạo thủ công, bạn có thể truy cập:
 ```
 https://your-site.netlify.app/api/init
 ```
-
-Hoặc dùng curl:
-```bash
-curl https://your-site.netlify.app/api/init
-```
-
-API này sẽ tự động tạo các sheet: Members, Courts, Schedules, Payments, Funds với headers phù hợp.
 
 ## Bước 5: Kiểm tra
 

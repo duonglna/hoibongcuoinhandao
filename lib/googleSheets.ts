@@ -131,6 +131,7 @@ export async function initializeSheets() {
     }
   } catch (error) {
     console.error('Error initializing sheets:', error);
+    throw error; // Re-throw để caller biết có lỗi
   }
 }
 
