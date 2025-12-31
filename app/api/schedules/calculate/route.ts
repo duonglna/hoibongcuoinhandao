@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       : 0;
 
     // Create payments
-    const payments = allParticipants.map(memberID => ({
+    const payments = allParticipants.map((memberID: string) => ({
       scheduleID,
       memberID,
       courtShare: courtSharePerPerson,
