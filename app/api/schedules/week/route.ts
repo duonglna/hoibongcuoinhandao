@@ -24,22 +24,42 @@ export async function GET() {
       console.log('WARNING: getCourts() returned empty array!');
     }
     
+    // Log all schedules with their status
+    if (schedules.length > 0) {
+      console.log('All schedules with status:', schedules.map((s: any) => ({
+        id: s.id,
+        date: s.date,
+        status: s.status,
+        statusType: typeof s.status,
+        statusValue: s.status,
+      })));
+    }
+    
     // Filter schedules with status "pending" only
     const pendingSchedules = schedules.filter((schedule: any) => {
-      const isPending = schedule.status === 'pending';
-      if (!isPending) {
-        console.log(`[FILTER] Schedule ${schedule.id} filtered out - status: ${schedule.status}`);
-      }
+      // Check status - handle both string and case variations
+      const status = schedule.status || schedule.Status || '';
+      const isPending = status.toLowerCase() === 'pending';
+      
+      console.log(`[FILTER] Schedule ${schedule.id}: status="${status}", type=${typeof status}, isPending=${isPending}`);
+      
       return isPending;
     });
     
     console.log('Pending schedules count:', pendingSchedules.length);
-    console.log('Pending schedules:', pendingSchedules.map((s: any) => ({
-      id: s.id,
-      date: s.date,
-      startTime: s.startTime,
-      status: s.status,
-    })));
+    if (pendingSchedules.length > 0) {
+      console.log('Pending schedules:', pendingSchedules.map((s: any) => ({
+        id: s.id,
+        date: s.date,
+        startTime: s.startTime,
+        status: s.status,
+      })));
+    } else {
+      console.log('WARNING: No pending schedules found!');
+      if (schedules.length > 0) {
+        console.log('All unique statuses found:', [...new Set(schedules.map((s: any) => s.status))]);
+      }
+    }
 
     // Sort by start date/time (earliest first)
     pendingSchedules.sort((a: any, b: any) => {
