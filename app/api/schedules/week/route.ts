@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSchedules, getCourts, getPayments } from '@/lib/googleSheets';
-import { startOfWeek, endOfWeek, parseISO, isWithinInterval } from 'date-fns';
+import { startOfWeek, endOfWeek, parseISO, isWithinInterval, format, addDays } from 'date-fns';
 
 export async function GET() {
   try {
@@ -10,28 +10,34 @@ export async function GET() {
       getPayments(),
     ]);
     
-    console.log('Total schedules:', schedules.length);
-    console.log('Sample schedule dates:', schedules.slice(0, 3).map((s: any) => s.date));
-    
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
     
-    console.log('Week range:', {
-      start: weekStart.toISOString(),
-      end: weekEnd.toISOString(),
-      now: now.toISOString()
-    });
+    // Also include next week if no schedules this week
+    const nextWeekEnd = addDays(weekEnd, 7);
 
     const thisWeekSchedules = schedules.filter((schedule: any) => {
       try {
         // Handle different date formats
         let scheduleDate: Date;
-        if (schedule.date.includes('T')) {
+        
+        if (!schedule.date) {
+          return false;
+        }
+        
+        // Try parseISO first (handles ISO format)
+        try {
           scheduleDate = parseISO(schedule.date);
-        } else {
-          // If date is in YYYY-MM-DD format, parse it
+        } catch {
+          // If parseISO fails, try new Date
           scheduleDate = new Date(schedule.date);
+        }
+        
+        // Check if date is valid
+        if (isNaN(scheduleDate.getTime())) {
+          console.error(`Invalid date for schedule ${schedule.id}: ${schedule.date}`);
+          return false;
         }
         
         // Set time to start of day for comparison
@@ -42,7 +48,6 @@ export async function GET() {
         end.setHours(23, 59, 59, 999);
         
         const isInWeek = isWithinInterval(scheduleDate, { start, end });
-        console.log(`Schedule ${schedule.id} (${schedule.date}): ${isInWeek ? 'IN' : 'OUT'} week`);
         return isInWeek;
       } catch (error: any) {
         console.error(`Error parsing schedule date ${schedule.date}:`, error?.message);
@@ -50,9 +55,38 @@ export async function GET() {
       }
     });
 
-    console.log('This week schedules count:', thisWeekSchedules.length);
+    // If no schedules this week, include next week's schedules
+    let schedulesToShow = thisWeekSchedules;
+    if (schedulesToShow.length === 0) {
+      const nextWeekSchedules = schedules.filter((schedule: any) => {
+        try {
+          let scheduleDate: Date;
+          try {
+            scheduleDate = parseISO(schedule.date);
+          } catch {
+            scheduleDate = new Date(schedule.date);
+          }
+          
+          if (isNaN(scheduleDate.getTime())) {
+            return false;
+          }
+          
+          scheduleDate.setHours(0, 0, 0, 0);
+          const start = new Date(weekEnd);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(nextWeekEnd);
+          end.setHours(23, 59, 59, 999);
+          
+          return isWithinInterval(scheduleDate, { start, end });
+        } catch {
+          return false;
+        }
+      });
+      
+      schedulesToShow = nextWeekSchedules;
+    }
 
-    const schedulesWithCourtInfo = thisWeekSchedules.map((schedule: any) => {
+    const schedulesWithCourtInfo = schedulesToShow.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);
       
       return {

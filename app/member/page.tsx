@@ -265,7 +265,10 @@ export default function MemberPage() {
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Lịch chơi tuần này</h2>
           {schedules.length === 0 ? (
-            <p className="text-gray-500">Không có lịch chơi nào trong tuần này</p>
+            <div className="text-gray-500">
+              <p>Không có lịch chơi nào trong tuần này</p>
+              <p className="text-sm mt-2 text-gray-400">Vui lòng thêm lịch chơi trong trang admin</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {schedules.map((schedule) => {
