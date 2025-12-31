@@ -13,18 +13,9 @@ export async function GET() {
     const now = new Date();
     console.log('Current time:', now.toISOString());
     console.log('Total schedules from getSchedules:', schedules.length);
-    if (schedules.length > 0) {
-      console.log('Sample schedule:', {
-        id: schedules[0].id,
-        date: schedules[0].date,
-        startTime: schedules[0].startTime,
-        status: schedules[0].status,
-      });
-    }
 
-    // Filter schedules that are "Sắp diễn ra" (upcoming)
-    // Show all schedules with status "pending" or schedules in the future
-    const upcomingSchedules = schedules.filter((schedule: any) => {
+    // Filter schedules that haven't ended yet (end time = startTime + hours)
+    const activeSchedules = schedules.filter((schedule: any) => {
       try {
         if (!schedule.date) {
           console.log(`Schedule ${schedule.id} has no date`);
@@ -34,7 +25,6 @@ export async function GET() {
         // Parse date - handle YYYY-MM-DD format
         let scheduleDate: Date;
         try {
-          // parseISO works with ISO format (YYYY-MM-DD)
           scheduleDate = parseISO(schedule.date);
         } catch {
           scheduleDate = new Date(schedule.date);
@@ -46,44 +36,44 @@ export async function GET() {
         }
         
         // Parse start time
-        const [hours, minutes] = (schedule.startTime || '00:00').split(':').map(Number);
-        const scheduleDateTime = new Date(scheduleDate);
-        scheduleDateTime.setHours(hours, minutes, 0, 0);
+        const [startHours, startMinutes] = (schedule.startTime || '00:00').split(':').map(Number);
+        const scheduleStartDateTime = new Date(scheduleDate);
+        scheduleStartDateTime.setHours(startHours, startMinutes, 0, 0);
         
-        // Simple comparison - check if schedule datetime is in the future
-        const isUpcoming = scheduleDateTime.getTime() > now.getTime();
+        // Calculate end time (start time + hours)
+        const scheduleEndDateTime = new Date(scheduleStartDateTime);
+        scheduleEndDateTime.setHours(scheduleStartDateTime.getHours() + (schedule.hours || 1));
         
-        console.log(`Schedule ${schedule.id}: date=${schedule.date}, time=${schedule.startTime}, datetime=${scheduleDateTime.toISOString()}, now=${now.toISOString()}, isUpcoming=${isUpcoming}, status=${schedule.status}`);
+        // Check if schedule hasn't ended yet (end time is in the future)
+        const hasNotEnded = scheduleEndDateTime.getTime() > now.getTime();
         
-        // Return true if schedule is in the future
-        return isUpcoming;
+        console.log(`Schedule ${schedule.id}: date=${schedule.date}, startTime=${schedule.startTime}, hours=${schedule.hours}, endTime=${scheduleEndDateTime.toISOString()}, now=${now.toISOString()}, hasNotEnded=${hasNotEnded}`);
+        
+        return hasNotEnded;
       } catch (error: any) {
         console.error(`Error parsing schedule ${schedule.id}:`, error?.message);
         return false;
       }
     });
     
-    console.log('Upcoming schedules count:', upcomingSchedules.length);
-    if (upcomingSchedules.length > 0) {
-      console.log('Upcoming schedules:', upcomingSchedules.map((s: any) => ({
-        id: s.id,
-        date: s.date,
-        startTime: s.startTime,
-      })));
-    }
+    console.log('Active schedules count (not ended):', activeSchedules.length);
 
-    // Sort by date (earliest first)
-    upcomingSchedules.sort((a: any, b: any) => {
+    // Sort by start date/time (earliest first)
+    activeSchedules.sort((a: any, b: any) => {
       try {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
+        const timeA = a.startTime.split(':').map(Number);
+        const timeB = b.startTime.split(':').map(Number);
+        dateA.setHours(timeA[0], timeA[1], 0, 0);
+        dateB.setHours(timeB[0], timeB[1], 0, 0);
         return dateA.getTime() - dateB.getTime();
       } catch {
         return 0;
       }
     });
 
-    const schedulesWithCourtInfo = upcomingSchedules.map((schedule: any) => {
+    const schedulesWithCourtInfo = activeSchedules.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);
       
       // Calculate total price: numberOfCourts * hours * pricePerHour
