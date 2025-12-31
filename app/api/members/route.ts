@@ -16,10 +16,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+    
+    // Validate required fields
+    if (!data.name || data.name.trim() === '') {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    }
+    
     const id = await addMember(data);
     return NextResponse.json({ id, ...data });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to add member' }, { status: 500 });
+  } catch (error: any) {
+    console.error('API Error adding member:', error?.message || error);
+    return NextResponse.json({ 
+      error: 'Failed to add member',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: 500 });
   }
 }
 

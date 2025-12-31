@@ -203,21 +203,77 @@ export async function getMembers() {
 }
 
 export async function addMember(member: { name: string; phone?: string; email?: string }) {
+  if (isBuildTime) {
+    throw new Error('Cannot add member during build time');
+  }
+  
   const sheetsClient = getSheets();
   if (!sheetsClient) {
-    throw new Error('Google Sheets not initialized');
+    // Try to initialize first
+    await initializeSheets();
+    const retryClient = getSheets();
+    if (!retryClient) {
+      throw new Error('Google Sheets not initialized. Please check your environment variables.');
+    }
+    // Use retryClient
+    const id = `member_${Date.now()}`;
+    try {
+      await retryClient.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.MEMBERS}!A:D`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[id, member.name, member.phone || '', member.email || '']],
+        },
+      });
+      return id;
+    } catch (error: any) {
+      // If sheet doesn't exist, initialize and retry
+      if (error?.response?.status === 400 || error?.code === 400) {
+        await initializeSheets();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await retryClient.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.MEMBERS}!A:D`,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [[id, member.name, member.phone || '', member.email || '']],
+          },
+        });
+        return id;
+      }
+      throw error;
+    }
   }
   
   const id = `member_${Date.now()}`;
-  await sheetsClient.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.MEMBERS}!A:D`,
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [[id, member.name, member.phone || '', member.email || '']],
-    },
-  });
-  return id;
+  try {
+    await sheetsClient.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.MEMBERS}!A:D`,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[id, member.name, member.phone || '', member.email || '']],
+      },
+    });
+    return id;
+  } catch (error: any) {
+    // If sheet doesn't exist, initialize and retry
+    if (error?.response?.status === 400 || error?.code === 400) {
+      await initializeSheets();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sheetsClient.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEETS.MEMBERS}!A:D`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[id, member.name, member.phone || '', member.email || '']],
+        },
+      });
+      return id;
+    }
+    throw error;
+  }
 }
 
 export async function updateMember(id: string, member: { name: string; phone?: string; email?: string }) {
