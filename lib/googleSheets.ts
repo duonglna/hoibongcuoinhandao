@@ -664,23 +664,53 @@ export async function getSchedules() {
     if (error?.response?.status === 400 || error?.code === 400) {
       try {
         await initializeSheets();
-    const response = await sheetsClient.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.SCHEDULES}!A2:K`,
-    });
-        return (response.data.values || []).map((row: any, index: number) => ({
-          id: row[0] || `schedule_${Date.now()}_${index}`,
-          courtID: row[1] || '',
-          date: row[2] || '',
-          startTime: row[3] || '',
-          hours: parseFloat(row[4] || '1'),
-          numberOfCourts: parseFloat(row[5] || '1'),
-          courtPrice: parseFloat(row[6] || '0'),
-          racketPrice: parseFloat(row[7] || '0'),
-          waterPrice: parseFloat(row[8] || '0'),
-          participants: row[9] ? row[9].split(',').filter(Boolean) : [],
-          status: row[10] || 'pending',
-        }));
+        const response = await sheetsClient.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEETS.SCHEDULES}!A2:K`,
+        });
+        
+        const schedules = (response.data.values || []).map((row: any, index: number) => {
+          // Handle both old format (without numberOfCourts) and new format (with numberOfCourts)
+          let schedule;
+          if (row.length >= 11) {
+            // New format with numberOfCourts
+            schedule = {
+              id: row[0] || `schedule_${Date.now()}_${index}`,
+              courtID: row[1] || '',
+              date: row[2] || '',
+              startTime: row[3] || '',
+              hours: parseFloat(row[4] || '1'),
+              numberOfCourts: parseFloat(row[5] || '1'),
+              courtPrice: parseFloat(row[6] || '0'),
+              racketPrice: parseFloat(row[7] || '0'),
+              waterPrice: parseFloat(row[8] || '0'),
+              participants: row[9] ? row[9].split(',').filter(Boolean) : [],
+              status: row[10] || 'pending',
+            };
+          } else if (row.length >= 10) {
+            // Old format without numberOfCourts
+            schedule = {
+              id: row[0] || `schedule_${Date.now()}_${index}`,
+              courtID: row[1] || '',
+              date: row[2] || '',
+              startTime: row[3] || '',
+              hours: parseFloat(row[4] || '1'),
+              numberOfCourts: 1, // Default to 1 for old data
+              courtPrice: parseFloat(row[5] || '0'),
+              racketPrice: parseFloat(row[6] || '0'),
+              waterPrice: parseFloat(row[7] || '0'),
+              participants: row[8] ? row[8].split(',').filter(Boolean) : [],
+              status: row[9] || 'pending',
+            };
+          } else {
+            console.warn(`getSchedules (retry) - Row ${index} has invalid length: ${row.length}`, row);
+            return null;
+          }
+          return schedule;
+        }).filter(Boolean);
+        
+        console.log('getSchedules (retry) - Returning schedules count:', schedules.length);
+        return schedules;
       } catch (initError) {
         console.error('Error initializing or getting schedules:', initError);
         return [];

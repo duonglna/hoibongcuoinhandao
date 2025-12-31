@@ -13,9 +13,17 @@ export async function GET() {
     const now = new Date();
     console.log('Current time:', now.toISOString());
     console.log('Total schedules from getSchedules:', schedules.length);
-    console.log('Sample schedules:', schedules.slice(0, 2));
+    if (schedules.length > 0) {
+      console.log('Sample schedule:', {
+        id: schedules[0].id,
+        date: schedules[0].date,
+        startTime: schedules[0].startTime,
+        status: schedules[0].status,
+      });
+    }
 
     // Filter schedules that are "Sắp diễn ra" (upcoming)
+    // Show all schedules with status "pending" or schedules in the future
     const upcomingSchedules = schedules.filter((schedule: any) => {
       try {
         if (!schedule.date) {
@@ -42,14 +50,12 @@ export async function GET() {
         const scheduleDateTime = new Date(scheduleDate);
         scheduleDateTime.setHours(hours, minutes, 0, 0);
         
-        // Use UTC comparison to avoid timezone issues
-        const nowUTC = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-        const scheduleUTC = new Date(scheduleDateTime.getTime() - scheduleDateTime.getTimezoneOffset() * 60000);
+        // Simple comparison - check if schedule datetime is in the future
+        const isUpcoming = scheduleDateTime.getTime() > now.getTime();
         
-        const isUpcoming = scheduleUTC > nowUTC;
-        console.log(`Schedule ${schedule.id}: date=${schedule.date}, time=${schedule.startTime}, datetime=${scheduleDateTime.toISOString()}, now=${now.toISOString()}, isUpcoming=${isUpcoming}`);
+        console.log(`Schedule ${schedule.id}: date=${schedule.date}, time=${schedule.startTime}, datetime=${scheduleDateTime.toISOString()}, now=${now.toISOString()}, isUpcoming=${isUpcoming}, status=${schedule.status}`);
         
-        // Check if schedule is in the future
+        // Return true if schedule is in the future
         return isUpcoming;
       } catch (error: any) {
         console.error(`Error parsing schedule ${schedule.id}:`, error?.message);
@@ -58,6 +64,13 @@ export async function GET() {
     });
     
     console.log('Upcoming schedules count:', upcomingSchedules.length);
+    if (upcomingSchedules.length > 0) {
+      console.log('Upcoming schedules:', upcomingSchedules.map((s: any) => ({
+        id: s.id,
+        date: s.date,
+        startTime: s.startTime,
+      })));
+    }
 
     // Sort by date (earliest first)
     upcomingSchedules.sort((a: any, b: any) => {
