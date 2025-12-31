@@ -22,7 +22,7 @@ export async function GET() {
     }
 
     // Process private key
-    let privateKey = privateKeyRaw.trim();
+    let privateKey = (privateKeyRaw || '').trim();
     
     // Remove outer quotes
     if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
