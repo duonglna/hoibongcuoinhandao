@@ -372,7 +372,7 @@ export default function MemberPage() {
                           Số sân: {schedule.numberOfCourts || 1}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
-                          Thành viên: {participantNames || 'Chưa có'}
+                          Thành viên ({schedule.participants.length}): {participantNames || 'Chưa có'}
                         </p>
                       </div>
                       <button

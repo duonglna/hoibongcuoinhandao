@@ -434,7 +434,7 @@ export default function SchedulesTab() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {participantNames || 'Chưa có'}
+                    {schedule.participants.length > 0 ? `${schedule.participants.length} thành viên: ${participantNames}` : 'Chưa có'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
