@@ -153,7 +153,13 @@ export async function getMembers() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.MEMBERS}!A2:D`,
     });
-    return (response.data.values || []).map((row: any, index: number) => ({
+    
+    // Handle empty sheet (only headers, no data rows)
+    if (!response.data.values || response.data.values.length === 0) {
+      return [];
+    }
+    
+    return response.data.values.map((row: any, index: number) => ({
       id: row[0] || `member_${Date.now()}_${index}`,
       name: row[1] || '',
       phone: row[2] || undefined,
@@ -161,18 +167,24 @@ export async function getMembers() {
     }));
   } catch (error: any) {
     // If sheet doesn't exist (400 error), try to initialize
-    if (error?.response?.status === 400 || error?.code === 400) {
+    if (error?.response?.status === 400 || error?.code === 400 || error?.message?.includes('Unable to parse range')) {
       console.log('Sheet may not exist, initializing...');
       try {
         await initializeSheets();
         // Wait a bit for sheets to be created
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         // Try again after initialization
         const response = await sheetsClient.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.MEMBERS}!A2:D`,
         });
-        return (response.data.values || []).map((row: any, index: number) => ({
+        
+        // Handle empty sheet
+        if (!response.data.values || response.data.values.length === 0) {
+          return [];
+        }
+        
+        return response.data.values.map((row: any, index: number) => ({
           id: row[0] || `member_${Date.now()}_${index}`,
           name: row[1] || '',
           phone: row[2] || undefined,
@@ -180,10 +192,12 @@ export async function getMembers() {
         }));
       } catch (initError: any) {
         console.error('Error initializing or getting members:', initError?.message || initError);
+        // Return empty array instead of throwing
         return [];
       }
     }
     console.error('Error getting members:', error?.message || error);
+    // Always return empty array, never throw
     return [];
   }
 }
@@ -669,7 +683,12 @@ export async function getFunds() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.FUNDS}!A2:C`,
     });
-    return (response.data.values || []).map((row: any) => ({
+    
+    if (!response.data.values || response.data.values.length === 0) {
+      return [];
+    }
+    
+    return response.data.values.map((row: any) => ({
       id: row[0] || '',
       memberID: row[1] || '',
       amount: parseFloat(row[2] || '0'),

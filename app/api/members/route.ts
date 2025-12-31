@@ -4,13 +4,12 @@ import { getMembers, addMember, updateMember, deleteMember } from '@/lib/googleS
 export async function GET() {
   try {
     const members = await getMembers();
-    return NextResponse.json(members);
+    // Always return array, even if empty
+    return NextResponse.json(Array.isArray(members) ? members : []);
   } catch (error: any) {
     console.error('API Error getting members:', error?.message || error);
-    return NextResponse.json({ 
-      error: 'Failed to fetch members',
-      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
-    }, { status: 500 });
+    // Return empty array instead of error to prevent 500
+    return NextResponse.json([]);
   }
 }
 
