@@ -14,18 +14,43 @@ function getAuth() {
   }
   
   if (!auth) {
-    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL || !privateKey) {
+    let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+    
+    if (!privateKey) {
+      console.error('GOOGLE_SHEETS_PRIVATE_KEY is not set');
       return null;
     }
     
-    auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-        private_key: privateKey,
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
+    // Handle different formats of private key
+    // Remove quotes if present
+    privateKey = privateKey.replace(/^["']|["']$/g, '');
+    
+    // Replace escaped newlines with actual newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    
+    // Ensure it starts and ends with proper markers
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+      console.error('Private key format is invalid - missing BEGIN PRIVATE KEY');
+      return null;
+    }
+    
+    if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+      console.error('GOOGLE_SHEETS_CLIENT_EMAIL is not set');
+      return null;
+    }
+    
+    try {
+      auth = new google.auth.GoogleAuth({
+        credentials: {
+          client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+          private_key: privateKey,
+        },
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
+    } catch (error: any) {
+      console.error('Error creating Google Auth:', error?.message || error);
+      return null;
+    }
   }
   return auth;
 }
@@ -71,9 +96,18 @@ export async function initializeSheets() {
     throw new Error('GOOGLE_SHEETS_PRIVATE_KEY is not set');
   }
   
+  // Validate private key format
+  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+  privateKey = privateKey.replace(/^["']|["']$/g, ''); // Remove quotes
+  privateKey = privateKey.replace(/\\n/g, '\n'); // Replace escaped newlines
+  
+  if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
+    throw new Error('GOOGLE_SHEETS_PRIVATE_KEY format is invalid. It should start with "-----BEGIN PRIVATE KEY-----" and end with "-----END PRIVATE KEY-----"');
+  }
+  
   const sheetsClient = getSheets();
   if (!sheetsClient) {
-    throw new Error('Failed to initialize Google Sheets client. Please check your credentials.');
+    throw new Error('Failed to initialize Google Sheets client. Please check your credentials. Common issues: 1) Private key format is wrong (check newlines), 2) Service Account email is incorrect, 3) Google Sheets API is not enabled.');
   }
   
   try {
