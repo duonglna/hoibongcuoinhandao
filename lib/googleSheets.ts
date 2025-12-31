@@ -69,7 +69,7 @@ export async function initializeSheets() {
       spreadsheetId: SPREADSHEET_ID,
     });
 
-    const existingSheets = spreadsheet.data.sheets?.map(s => s.properties?.title) || [];
+    const existingSheets = spreadsheet.data.sheets?.map((s: any) => s.properties?.title) || [];
     
     const sheetsToCreate = Object.values(SHEETS).filter(name => !existingSheets.includes(name));
     
