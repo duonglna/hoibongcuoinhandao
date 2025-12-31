@@ -24,87 +24,25 @@ export async function GET() {
       console.log('WARNING: getCourts() returned empty array!');
     }
     
-    const now = new Date();
-    console.log('Current time:', now.toISOString());
-
-    // Filter schedules that haven't ended yet (end time = startTime + hours)
-    // For debugging: temporarily return all schedules to see if getSchedules() works
-    const activeSchedules = schedules.filter((schedule: any) => {
-      try {
-        if (!schedule.date) {
-          console.log(`[FILTER] Schedule ${schedule.id} has no date`);
-          return false;
-        }
-        
-        if (!schedule.startTime) {
-          console.log(`[FILTER] Schedule ${schedule.id} has no startTime`);
-          return false;
-        }
-        
-        // Parse date - handle YYYY-MM-DD format
-        let scheduleDate: Date;
-        try {
-          // parseISO expects ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
-          scheduleDate = parseISO(schedule.date);
-          // If parseISO returns invalid date, try new Date
-          if (isNaN(scheduleDate.getTime())) {
-            scheduleDate = new Date(schedule.date);
-          }
-        } catch {
-          scheduleDate = new Date(schedule.date);
-        }
-        
-        if (isNaN(scheduleDate.getTime())) {
-          console.log(`[FILTER] Schedule ${schedule.id} has invalid date: ${schedule.date}`);
-          return false;
-        }
-        
-        // Parse start time (format: HH:mm)
-        const timeParts = (schedule.startTime || '00:00').split(':');
-        if (timeParts.length !== 2) {
-          console.log(`[FILTER] Schedule ${schedule.id} has invalid startTime format: ${schedule.startTime}`);
-          return false;
-        }
-        
-        const startHours = parseInt(timeParts[0], 10);
-        const startMinutes = parseInt(timeParts[1], 10);
-        
-        if (isNaN(startHours) || isNaN(startMinutes)) {
-          console.log(`[FILTER] Schedule ${schedule.id} has invalid startTime: ${schedule.startTime}`);
-          return false;
-        }
-        
-        // Create start datetime (local time)
-        const scheduleStartDateTime = new Date(scheduleDate);
-        scheduleStartDateTime.setHours(startHours, startMinutes, 0, 0);
-        
-        // Calculate end time (start time + hours)
-        const scheduleEndDateTime = new Date(scheduleStartDateTime);
-        const hours = parseFloat(schedule.hours) || 1;
-        scheduleEndDateTime.setTime(scheduleStartDateTime.getTime() + (hours * 60 * 60 * 1000));
-        
-        // Check if schedule hasn't ended yet (end time is in the future)
-        const hasNotEnded = scheduleEndDateTime.getTime() > now.getTime();
-        
-        console.log(`[FILTER] Schedule ${schedule.id}: date=${schedule.date}, startTime=${schedule.startTime}, hours=${hours}, startDT=${scheduleStartDateTime.toISOString()}, endDT=${scheduleEndDateTime.toISOString()}, now=${now.toISOString()}, hasNotEnded=${hasNotEnded}`);
-        
-        return hasNotEnded;
-      } catch (error: any) {
-        console.error(`[FILTER] Error parsing schedule ${schedule.id}:`, error?.message, error);
-        return false;
+    // Filter schedules with status "pending" only
+    const pendingSchedules = schedules.filter((schedule: any) => {
+      const isPending = schedule.status === 'pending';
+      if (!isPending) {
+        console.log(`[FILTER] Schedule ${schedule.id} filtered out - status: ${schedule.status}`);
       }
+      return isPending;
     });
     
-    console.log('Active schedules count (not ended):', activeSchedules.length);
-    console.log('Active schedules:', activeSchedules.map((s: any) => ({
+    console.log('Pending schedules count:', pendingSchedules.length);
+    console.log('Pending schedules:', pendingSchedules.map((s: any) => ({
       id: s.id,
       date: s.date,
       startTime: s.startTime,
-      hours: s.hours,
+      status: s.status,
     })));
 
     // Sort by start date/time (earliest first)
-    activeSchedules.sort((a: any, b: any) => {
+    pendingSchedules.sort((a: any, b: any) => {
       try {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
@@ -120,7 +58,7 @@ export async function GET() {
 
     console.log('Courts data:', courts.length, courts.map((c: any) => ({ id: c.id, name: c.name })));
     
-    const schedulesWithCourtInfo = activeSchedules.map((schedule: any) => {
+    const schedulesWithCourtInfo = pendingSchedules.map((schedule: any) => {
       const court = courts.find((c: any) => c.id === schedule.courtID);
       
       if (!court) {
