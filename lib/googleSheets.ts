@@ -208,7 +208,7 @@ export async function updateMember(id: string, member: { name: string; phone?: s
   }
   
   const members = await getMembers();
-  const memberIndex = members.findIndex(m => m.id === id);
+  const memberIndex = members.findIndex((m: any) => m.id === id);
   if (memberIndex === -1) throw new Error('Member not found');
 
   const rowIndex = memberIndex + 2; // +2 because of header and 0-based index
@@ -230,7 +230,7 @@ export async function deleteMember(id: string) {
   }
   
   const members = await getMembers();
-  const memberIndex = members.findIndex(m => m.id === id);
+  const memberIndex = members.findIndex((m: any) => m.id === id);
   if (memberIndex === -1) throw new Error('Member not found');
 
   const rowIndex = memberIndex + 2;
@@ -261,7 +261,7 @@ async function getSheetId(sheetName: string): Promise<number> {
   const spreadsheet = await sheetsClient.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });
-  const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
+  const sheet = spreadsheet.data.sheets?.find((s: any) => s.properties?.title === sheetName);
   if (!sheet?.properties?.sheetId) throw new Error(`Sheet ${sheetName} not found`);
   return sheet.properties.sheetId;
 }
@@ -347,7 +347,7 @@ export async function updateCourt(id: string, court: {
   active?: boolean;
 }) {
   const courts = await getCourts();
-  const courtIndex = courts.findIndex(c => c.id === id);
+  const courtIndex = courts.findIndex((c: any) => c.id === id);
   if (courtIndex === -1) throw new Error('Court not found');
 
   const rowIndex = courtIndex + 2;
@@ -369,7 +369,7 @@ export async function updateCourt(id: string, court: {
 
 export async function deleteCourt(id: string) {
   const courts = await getCourts();
-  const courtIndex = courts.findIndex(c => c.id === id);
+  const courtIndex = courts.findIndex((c: any) => c.id === id);
   if (courtIndex === -1) throw new Error('Court not found');
 
   const rowIndex = courtIndex + 2;
@@ -505,7 +505,7 @@ export async function updateSchedule(id: string, updates: Partial<{
   status?: string;
 }>) {
   const schedules = await getSchedules();
-  const scheduleIndex = schedules.findIndex(s => s.id === id);
+  const scheduleIndex = schedules.findIndex((s: any) => s.id === id);
   if (scheduleIndex === -1) throw new Error('Schedule not found');
 
   const schedule = schedules[scheduleIndex];
@@ -541,7 +541,7 @@ export async function updateSchedule(id: string, updates: Partial<{
 
 export async function deleteSchedule(id: string) {
   const schedules = await getSchedules();
-  const scheduleIndex = schedules.findIndex(s => s.id === id);
+  const scheduleIndex = schedules.findIndex((s: any) => s.id === id);
   if (scheduleIndex === -1) throw new Error('Schedule not found');
 
   const rowIndex = scheduleIndex + 2;
@@ -714,12 +714,12 @@ export async function getMemberBalance(memberID: string) {
   const [funds, payments] = await Promise.all([getFunds(), getPayments()]);
   
   const totalFunds = funds
-    .filter(f => f.memberID === memberID)
-    .reduce((sum, f) => sum + f.amount, 0);
+    .filter((f: any) => f.memberID === memberID)
+    .reduce((sum: number, f: any) => sum + f.amount, 0);
   
   const totalPayments = payments
-    .filter(p => p.memberID === memberID)
-    .reduce((sum, p) => sum + p.courtShare + p.racketShare + p.waterShare, 0);
+    .filter((p: any) => p.memberID === memberID)
+    .reduce((sum: number, p: any) => sum + p.courtShare + p.racketShare + p.waterShare, 0);
   
   return totalFunds - totalPayments;
 }
