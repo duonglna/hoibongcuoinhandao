@@ -140,6 +140,43 @@ git status
 
 ## Troubleshooting
 
+### Lỗi: "push declined due to repository rule violations"
+
+Lỗi này xảy ra khi repository có branch protection rules. Có 3 cách giải quyết:
+
+#### Cách 1: Tắt Branch Protection (Khuyến nghị cho repository cá nhân)
+
+1. Vào GitHub repository → **Settings** → **Branches**
+2. Tìm **"Branch protection rules"**
+3. Xóa hoặc disable rule cho branch `main`
+4. Thử push lại:
+```bash
+git push -u origin main
+```
+
+#### Cách 2: Push vào branch khác rồi tạo Pull Request
+
+```bash
+# Tạo branch mới
+git checkout -b initial-setup
+
+# Push vào branch mới
+git push -u origin initial-setup
+```
+
+Sau đó trên GitHub:
+1. Tạo Pull Request từ branch `initial-setup` vào `main`
+2. Merge PR
+
+#### Cách 3: Force push (Cẩn thận - chỉ dùng nếu repository trống)
+
+```bash
+# Chỉ dùng nếu repository hoàn toàn trống và bạn chắc chắn
+git push -u origin main --force
+```
+
+⚠️ **Cảnh báo**: `--force` sẽ ghi đè mọi thứ trên remote. Chỉ dùng nếu repository trống hoặc bạn chắc chắn muốn ghi đè.
+
 ### Lỗi: "remote origin already exists"
 ```bash
 # Xóa remote cũ
