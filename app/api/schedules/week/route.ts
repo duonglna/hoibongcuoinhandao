@@ -44,16 +44,23 @@ export async function GET() {
         status: s.status,
         statusType: typeof s.status,
         statusValue: JSON.stringify(s.status),
+        rawStatus: s.status,
       })));
     }
     
+    // Temporarily return all schedules to debug - remove filter
     const pendingSchedules = schedules.filter((schedule: any) => {
       // Check status - handle both string and case variations, and also check for undefined/null
-      const status = (schedule.status || '').toString().trim().toLowerCase();
+      const rawStatus = schedule.status;
+      const status = (rawStatus || '').toString().trim().toLowerCase();
       const isPending = status === 'pending';
       
-      if (!isPending) {
-        console.log(`[FILTER OUT] Schedule ${schedule.id}: status="${schedule.status}" (normalized: "${status}")`);
+      console.log(`[FILTER] Schedule ${schedule.id}: rawStatus="${rawStatus}", normalized="${status}", isPending=${isPending}`);
+      
+      // For debugging: if no pending schedules, return all
+      if (schedules.length > 0 && schedules.every((s: any) => (s.status || '').toString().trim().toLowerCase() !== 'pending')) {
+        console.log('WARNING: No schedules with status "pending" found, returning all schedules for debugging');
+        return true; // Return all for debugging
       }
       
       return isPending;
