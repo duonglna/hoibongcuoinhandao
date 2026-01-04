@@ -871,14 +871,22 @@ export async function getPayments() {
       spreadsheetId: SPREADSHEET_ID,
       range: `${SHEETS.PAYMENTS}!A2:F`,
     });
-    return (response.data.values || []).map((row: any) => ({
-      id: row[0] || '',
-      scheduleID: row[1] || '',
-      memberID: row[2] || '',
-      courtShare: parseFloat(row[3] || '0'),
-      racketShare: parseFloat(row[4] || '0'),
-      waterShare: parseFloat(row[5] || '0'),
-    }));
+    const payments = (response.data.values || []).map((row: any) => {
+      const payment = {
+        id: String(row[0] || '').trim(),
+        scheduleID: String(row[1] || '').trim(),
+        memberID: String(row[2] || '').trim(),
+        courtShare: parseFloat(String(row[3] || '0').replace(/,/g, '')) || 0,
+        racketShare: parseFloat(String(row[4] || '0').replace(/,/g, '')) || 0,
+        waterShare: parseFloat(String(row[5] || '0').replace(/,/g, '')) || 0,
+      };
+      return payment;
+    });
+    console.log('getPayments - Total payments:', payments.length);
+    if (payments.length > 0) {
+      console.log('getPayments - Sample payment:', payments[0]);
+    }
+    return payments;
   } catch (error: any) {
     if (error?.response?.status === 400 || error?.code === 400) {
       try {
@@ -887,14 +895,18 @@ export async function getPayments() {
           spreadsheetId: SPREADSHEET_ID,
           range: `${SHEETS.PAYMENTS}!A2:F`,
         });
-        return (response.data.values || []).map((row: any) => ({
-          id: row[0] || '',
-          scheduleID: row[1] || '',
-          memberID: row[2] || '',
-          courtShare: parseFloat(row[3] || '0'),
-          racketShare: parseFloat(row[4] || '0'),
-          waterShare: parseFloat(row[5] || '0'),
-        }));
+        const payments = (response.data.values || []).map((row: any) => {
+          const payment = {
+            id: String(row[0] || '').trim(),
+            scheduleID: String(row[1] || '').trim(),
+            memberID: String(row[2] || '').trim(),
+            courtShare: parseFloat(String(row[3] || '0').replace(/,/g, '')) || 0,
+            racketShare: parseFloat(String(row[4] || '0').replace(/,/g, '')) || 0,
+            waterShare: parseFloat(String(row[5] || '0').replace(/,/g, '')) || 0,
+          };
+          return payment;
+        });
+        return payments;
       } catch (initError) {
         console.error('Error initializing or getting payments:', initError);
         return [];

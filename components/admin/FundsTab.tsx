@@ -62,6 +62,16 @@ export default function FundsTab() {
         members: Array.isArray(membersData) ? membersData.length : 0,
       });
       
+      // Log sample data to verify structure
+      if (Array.isArray(paymentsData) && paymentsData.length > 0) {
+        console.log('FundsTab - Sample payment:', paymentsData[0]);
+        console.log('FundsTab - All payment memberIDs:', paymentsData.map((p: any) => p.memberID));
+      }
+      if (Array.isArray(membersData) && membersData.length > 0) {
+        console.log('FundsTab - Sample member:', membersData[0]);
+        console.log('FundsTab - All member IDs:', membersData.map((m: any) => m.id));
+      }
+      
       setFunds(Array.isArray(fundsData) ? fundsData : []);
       setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       setMembers(Array.isArray(membersData) ? membersData : []);
@@ -94,15 +104,27 @@ export default function FundsTab() {
   };
 
   const getMemberFinancialInfo = (memberID: string): MemberFinancialInfo => {
-    const totalFunds = funds
-      .filter(f => f.memberID === memberID)
-      .reduce((sum, f) => sum + f.amount, 0);
+    const memberFunds = funds.filter(f => f.memberID === memberID);
+    const totalFunds = memberFunds.reduce((sum, f) => sum + f.amount, 0);
     
-    const totalPayments = payments
-      .filter(p => p.memberID === memberID)
-      .reduce((sum, p) => sum + p.courtShare + p.racketShare + p.waterShare, 0);
+    const memberPayments = payments.filter(p => p.memberID === memberID);
+    const totalPayments = memberPayments.reduce((sum, p) => sum + p.courtShare + p.racketShare + p.waterShare, 0);
     
     const balance = totalFunds - totalPayments;
+    
+    // Debug logging for first member
+    if (members.length > 0 && memberID === members[0].id) {
+      console.log('FundsTab - Debug for member:', memberID, {
+        memberFunds: memberFunds.length,
+        memberPayments: memberPayments.length,
+        totalFunds,
+        totalPayments,
+        balance,
+        allPaymentsCount: payments.length,
+        allFundsCount: funds.length,
+        samplePayment: memberPayments[0],
+      });
+    }
     
     return {
       memberID,
