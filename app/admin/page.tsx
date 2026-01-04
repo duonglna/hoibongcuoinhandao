@@ -13,6 +13,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('members');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [fundsRefreshKey, setFundsRefreshKey] = useState(0);
 
   useEffect(() => {
     const admin = sessionStorage.getItem('admin');
@@ -54,7 +55,13 @@ export default function AdminPage() {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  // Refresh funds tab when switching to it
+                  if (tab.id === 'funds') {
+                    setFundsRefreshKey(prev => prev + 1);
+                  }
+                }}
                 className={`px-4 py-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'text-blue-600 border-b-2 border-blue-600'
@@ -72,7 +79,7 @@ export default function AdminPage() {
         {activeTab === 'members' && <MembersTab />}
         {activeTab === 'courts' && <CourtsTab />}
         {activeTab === 'schedules' && <SchedulesTab />}
-        {activeTab === 'funds' && <FundsTab />}
+        {activeTab === 'funds' && <FundsTab key={fundsRefreshKey} />}
       </div>
     </div>
   );
