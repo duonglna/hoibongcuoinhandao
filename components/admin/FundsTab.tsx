@@ -257,6 +257,7 @@ export default function FundsTab() {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
             </tr>
@@ -271,6 +272,9 @@ export default function FundsTab() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {info.totalFunds.toLocaleString('vi-VN')} VNĐ
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
+                    {info.totalPayments.toLocaleString('vi-VN')} VNĐ
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {info.balance > 0 ? (

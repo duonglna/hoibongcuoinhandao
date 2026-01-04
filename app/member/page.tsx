@@ -431,6 +431,7 @@ export default function MemberPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
                 </tr>
@@ -445,6 +446,9 @@ export default function MemberPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {info.totalFunds.toLocaleString('vi-VN')} VNĐ
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
+                        {info.totalPayments.toLocaleString('vi-VN')} VNĐ
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {info.balance > 0 ? (
@@ -481,6 +485,10 @@ export default function MemberPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tiền quỹ đã đóng:</span>
                       <span className="text-gray-900 font-medium">{info.totalFunds.toLocaleString('vi-VN')} VNĐ</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Số tiền đã chi tiêu:</span>
+                      <span className="text-orange-600 font-medium">{info.totalPayments.toLocaleString('vi-VN')} VNĐ</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tiền quỹ còn:</span>
