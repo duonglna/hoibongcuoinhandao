@@ -43,15 +43,24 @@ export default function FundsTab() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+      // Add cache-busting to ensure fresh data
+      const timestamp = Date.now();
       const [fundsRes, paymentsRes, membersRes] = await Promise.all([
-        fetch('/api/funds'),
-        fetch('/api/payments'),
-        fetch('/api/members'),
+        fetch(`/api/funds?t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/payments?t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/members?t=${timestamp}`, { cache: 'no-store' }),
       ]);
       
       const fundsData = fundsRes.ok ? await fundsRes.json() : [];
       const paymentsData = paymentsRes.ok ? await paymentsRes.json() : [];
       const membersData = membersRes.ok ? await membersRes.json() : [];
+      
+      console.log('FundsTab - Fetched data:', {
+        funds: Array.isArray(fundsData) ? fundsData.length : 0,
+        payments: Array.isArray(paymentsData) ? paymentsData.length : 0,
+        members: Array.isArray(membersData) ? membersData.length : 0,
+      });
       
       setFunds(Array.isArray(fundsData) ? fundsData : []);
       setPayments(Array.isArray(paymentsData) ? paymentsData : []);
@@ -133,12 +142,24 @@ export default function FundsTab() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Quỹ thành viên</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          {showForm ? 'Hủy' : 'Thêm quỹ'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchData}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            title="Làm mới dữ liệu"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Làm mới
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            {showForm ? 'Hủy' : 'Thêm quỹ'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
