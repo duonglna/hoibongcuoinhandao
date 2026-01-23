@@ -517,6 +517,39 @@ export default function MemberPage() {
           </div>
         </div>
 
+        {/* Transfer information */}
+        <div className="mt-4 sm:mt-8 bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+            Transfer information
+          </h2>
+
+          <p className="text-sm text-gray-600 mb-3">
+            Vui lòng chuyển khoản theo thông tin dưới đây. Quét mã QR để nhập nhanh
+            thông tin tài khoản.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="border rounded-xl p-3 bg-white shadow-sm">
+              <img
+                src="/photo.png"
+                alt="Transfer QR information"
+                className="w-52 h-52 sm:w-64 sm:h-64 object-contain"
+              />
+            </div>
+
+            <div className="text-sm text-gray-700 space-y-1 w-full sm:w-auto">
+              <p>
+                <span className="font-semibold">Nội dung chuyển khoản:</span>{' '}
+                &lt;Tên thành viên&gt; + &quot;quỹ pickleball&quot;
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Nếu không quét được mã, vui lòng liên hệ admin để nhận thông tin tài
+                khoản chi tiết.
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
