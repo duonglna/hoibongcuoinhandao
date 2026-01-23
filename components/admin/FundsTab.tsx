@@ -103,6 +103,30 @@ export default function FundsTab() {
     }
   };
 
+  const handleQuickAddFund = async (memberID: string, balance: number) => {
+    // Only allow quick-add when member is in debt
+    if (balance >= 0) return;
+
+    const amount = Math.abs(balance);
+
+    try {
+      const response = await fetch('/api/funds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberID, amount }),
+      });
+
+      if (response.ok) {
+        // Reload data so the table updates
+        fetchData();
+      } else {
+        console.error('Quick add fund failed:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error quick-adding fund:', error);
+    }
+  };
+
   const getMemberFinancialInfo = (memberID: string): MemberFinancialInfo => {
     const memberFunds = funds.filter(f => f.memberID === memberID);
     const totalFunds = memberFunds.reduce((sum, f) => sum + f.amount, 0);
@@ -303,11 +327,14 @@ export default function FundsTab() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {members.map((member) => {
               const info = getMemberFinancialInfo(member.id);
+              const debt = info.balance < 0 ? Math.abs(info.balance) : 0;
+
               return (
                 <tr key={member.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -329,13 +356,27 @@ export default function FundsTab() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {info.balance < 0 ? (
+                    {debt > 0 ? (
                       <span className="text-red-600 font-medium">
-                        {Math.abs(info.balance).toLocaleString('vi-VN')} VNĐ
+                        {debt.toLocaleString('vi-VN')} VNĐ
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button
+                      type="button"
+                      disabled={debt === 0}
+                      onClick={() => handleQuickAddFund(member.id, info.balance)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium border ${
+                        debt === 0
+                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                      }`}
+                    >
+                      {debt > 0 ? `Bù quỹ ${debt.toLocaleString('vi-VN')} VNĐ` : 'Không nợ'}
+                    </button>
                   </td>
                 </tr>
               );
