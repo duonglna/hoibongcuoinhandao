@@ -16,22 +16,22 @@ export async function POST(request: Request) {
     const racketParticipantsList = racketParticipants || [];
     const waterParticipantsList = waterParticipants || [];
 
-    // Calculate shares (rounded up)
-    const courtSharePerPerson = Math.ceil(schedule.courtPrice / allParticipants.length);
+    // Calculate shares (rounded up to whole numbers - làm tròn lên)
+    const courtSharePerPerson = Math.ceil(Number(schedule.courtPrice) / allParticipants.length);
     const racketSharePerPerson = racketParticipantsList.length > 0 
-      ? Math.ceil(schedule.racketPrice / racketParticipantsList.length)
+      ? Math.ceil(Number(schedule.racketPrice) / racketParticipantsList.length)
       : 0;
     const waterSharePerPerson = waterParticipantsList.length > 0 
-      ? Math.ceil(schedule.waterPrice / waterParticipantsList.length)
+      ? Math.ceil(Number(schedule.waterPrice) / waterParticipantsList.length)
       : 0;
 
-    // Create payments
+    // Create payments with rounded up integer values
     const payments = allParticipants.map((memberID: string) => ({
       scheduleID,
       memberID,
-      courtShare: courtSharePerPerson,
-      racketShare: racketParticipantsList.includes(memberID) ? racketSharePerPerson : 0,
-      waterShare: waterParticipantsList.includes(memberID) ? waterSharePerPerson : 0,
+      courtShare: Math.ceil(courtSharePerPerson), // Ensure integer
+      racketShare: racketParticipantsList.includes(memberID) ? Math.ceil(racketSharePerPerson) : 0,
+      waterShare: waterParticipantsList.includes(memberID) ? Math.ceil(waterSharePerPerson) : 0,
     }));
 
     await addPayments(payments);

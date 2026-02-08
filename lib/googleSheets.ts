@@ -933,9 +933,9 @@ export async function addPayments(payments: Array<{
     `payment_${Date.now()}_${Math.random()}`,
     p.scheduleID,
     p.memberID,
-    p.courtShare,
-    p.racketShare,
-    p.waterShare,
+    Math.ceil(Number(p.courtShare)), // Ensure rounded up integer
+    Math.ceil(Number(p.racketShare)), // Ensure rounded up integer
+    Math.ceil(Number(p.waterShare)), // Ensure rounded up integer
   ]);
 
   await sheetsClient.spreadsheets.values.append({
