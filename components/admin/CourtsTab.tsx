@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatVND } from '@/lib/utils';
 
 interface Court {
   id: string;
@@ -207,7 +208,7 @@ export default function CourtsTab() {
                   {court.address}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {court.pricePerHour.toLocaleString('vi-VN')} VNĐ
+                  {formatVND(court.pricePerHour)} VNĐ
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <a

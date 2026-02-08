@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatVND } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -192,7 +193,7 @@ export default function MemberPage() {
         `Địa chỉ: ${schedule.court?.address || ''}\n` +
         `Số sân: ${schedule.numberOfCourts || 1}\n` +
         `Thành viên: ${schedule.participants.map((id: string) => members.find(m => m.id === id)?.name).filter(Boolean).join(', ')}\n` +
-        `Giá: ${totalPrice.toLocaleString('vi-VN')} VNĐ`
+        `Giá: ${formatVND(totalPrice)} VNĐ`
       );
       const location = encodeURIComponent(schedule.court?.address || '');
 
@@ -388,27 +389,27 @@ export default function MemberPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
                         <div>
                           <span className="text-gray-600 block mb-1">Giá sân:</span>
-                          <p className="font-medium">{(schedule.totalCourtPrice || schedule.courtPrice).toLocaleString('vi-VN')} VNĐ</p>
+                          <p className="font-medium">{formatVND(schedule.totalCourtPrice || schedule.courtPrice)} VNĐ</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            ({schedule.numberOfCourts || 1} sân × {schedule.hours} giờ × {schedule.court?.pricePerHour?.toLocaleString('vi-VN') || 0} VNĐ/giờ)
+                            ({schedule.numberOfCourts || 1} sân × {schedule.hours} giờ × {formatVND(schedule.court?.pricePerHour || 0)} VNĐ/giờ)
                           </p>
                         </div>
                         {schedule.racketPrice > 0 && (
                           <div>
                             <span className="text-gray-600 block mb-1">Giá vợt:</span>
-                            <p className="font-medium">{schedule.racketPrice.toLocaleString('vi-VN')} VNĐ</p>
+                            <p className="font-medium">{formatVND(schedule.racketPrice)} VNĐ</p>
                           </div>
                         )}
                         {schedule.waterPrice > 0 && (
                           <div>
                             <span className="text-gray-600 block mb-1">Giá nước:</span>
-                            <p className="font-medium">{schedule.waterPrice.toLocaleString('vi-VN')} VNĐ</p>
+                            <p className="font-medium">{formatVND(schedule.waterPrice)} VNĐ</p>
                           </div>
                         )}
                         <div>
                           <span className="text-gray-600 block mb-1">Tổng:</span>
                           <p className="font-medium text-base sm:text-lg">
-                            {((schedule.totalCourtPrice || schedule.courtPrice) + schedule.racketPrice + schedule.waterPrice).toLocaleString('vi-VN')} VNĐ
+                            {formatVND((schedule.totalCourtPrice || schedule.courtPrice) + schedule.racketPrice + schedule.waterPrice)} VNĐ
                           </p>
                         </div>
                       </div>
@@ -445,15 +446,15 @@ export default function MemberPage() {
                         {member.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {info.totalFunds.toLocaleString('vi-VN')} VNĐ
+                        {formatVND(info.totalFunds)} VNĐ
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
-                        {info.totalPayments.toLocaleString('vi-VN')} VNĐ
+                        {formatVND(info.totalPayments)} VNĐ
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {info.balance > 0 ? (
                           <span className="text-green-600 font-medium">
-                            {info.balance.toLocaleString('vi-VN')} VNĐ
+                            {formatVND(info.balance)} VNĐ
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>
@@ -462,7 +463,7 @@ export default function MemberPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {info.balance < 0 ? (
                           <span className="text-red-600 font-medium">
-                            {Math.abs(info.balance).toLocaleString('vi-VN')} VNĐ
+                            {formatVND(Math.abs(info.balance))} VNĐ
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>

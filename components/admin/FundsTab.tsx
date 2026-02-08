@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatVND } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -214,7 +215,7 @@ export default function FundsTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng quỹ đã đóng</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.totalFunds.toLocaleString('vi-VN')} VNĐ
+                {formatVND(stats.totalFunds)} VNĐ
               </p>
             </div>
             <div className="bg-green-100 rounded-full p-3">
@@ -230,7 +231,7 @@ export default function FundsTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng quỹ còn lại</p>
               <p className="text-2xl font-bold text-green-600">
-                {stats.totalRemaining.toLocaleString('vi-VN')} VNĐ
+                {formatVND(stats.totalRemaining)} VNĐ
               </p>
             </div>
             <div className="bg-blue-100 rounded-full p-3">
@@ -246,7 +247,7 @@ export default function FundsTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng đã chi tiêu</p>
               <p className="text-2xl font-bold text-orange-600">
-                {stats.totalPayments.toLocaleString('vi-VN')} VNĐ
+                {formatVND(stats.totalPayments)} VNĐ
               </p>
             </div>
             <div className="bg-orange-100 rounded-full p-3">
@@ -262,7 +263,7 @@ export default function FundsTab() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng nợ</p>
               <p className="text-2xl font-bold text-red-600">
-                {stats.totalDebt.toLocaleString('vi-VN')} VNĐ
+                {formatVND(stats.totalDebt)} VNĐ
               </p>
             </div>
             <div className="bg-red-100 rounded-full p-3">
@@ -341,15 +342,15 @@ export default function FundsTab() {
                     {member.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {info.totalFunds.toLocaleString('vi-VN')} VNĐ
+                    {formatVND(info.totalFunds)} VNĐ
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
-                    {info.totalPayments.toLocaleString('vi-VN')} VNĐ
+                    {formatVND(info.totalPayments)} VNĐ
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {info.balance > 0 ? (
                       <span className="text-green-600 font-medium">
-                        {info.balance.toLocaleString('vi-VN')} VNĐ
+                        {formatVND(info.balance)} VNĐ
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>
@@ -358,7 +359,7 @@ export default function FundsTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {debt > 0 ? (
                       <span className="text-red-600 font-medium">
-                        {debt.toLocaleString('vi-VN')} VNĐ
+                        {formatVND(debt)} VNĐ
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>
@@ -375,7 +376,7 @@ export default function FundsTab() {
                           : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
                       }`}
                     >
-                      {debt > 0 ? `Bù quỹ ${debt.toLocaleString('vi-VN')} VNĐ` : 'Không nợ'}
+                      {debt > 0 ? `Bù quỹ ${formatVND(debt)} VNĐ` : 'Không nợ'}
                     </button>
                   </td>
                 </tr>

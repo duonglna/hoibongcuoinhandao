@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatVND } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -499,18 +500,18 @@ export default function SchedulesTab() {
                 Số sân: {selectedSchedule.numberOfCourts || 1}
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                Giá sân: {selectedSchedule.courtPrice.toLocaleString('vi-VN')} VNĐ
+                Giá sân: {formatVND(selectedSchedule.courtPrice)} VNĐ
                 {selectedSchedule.numberOfCourts && selectedSchedule.numberOfCourts > 1 && (
                   <span className="text-xs text-gray-500 ml-2">
-                    ({selectedSchedule.numberOfCourts} sân × {selectedSchedule.hours} giờ × {courts.find(c => c.id === selectedSchedule.courtID)?.pricePerHour?.toLocaleString('vi-VN') || 0} VNĐ/giờ)
+                    ({selectedSchedule.numberOfCourts} sân × {selectedSchedule.hours} giờ × {formatVND(courts.find(c => c.id === selectedSchedule.courtID)?.pricePerHour || 0)} VNĐ/giờ)
                   </span>
                 )}
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                Giá vợt: {selectedSchedule.racketPrice.toLocaleString('vi-VN')} VNĐ
+                Giá vợt: {formatVND(selectedSchedule.racketPrice)} VNĐ
               </p>
               <p className="text-sm text-gray-600 mb-4">
-                Giá nước: {selectedSchedule.waterPrice.toLocaleString('vi-VN')} VNĐ
+                Giá nước: {formatVND(selectedSchedule.waterPrice)} VNĐ
               </p>
             </div>
 
