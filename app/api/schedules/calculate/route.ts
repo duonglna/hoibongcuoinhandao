@@ -16,13 +16,13 @@ export async function POST(request: Request) {
     const racketParticipantsList = racketParticipants || [];
     const waterParticipantsList = waterParticipants || [];
 
-    // Calculate shares
-    const courtSharePerPerson = schedule.courtPrice / allParticipants.length;
+    // Calculate shares (rounded up)
+    const courtSharePerPerson = Math.ceil(schedule.courtPrice / allParticipants.length);
     const racketSharePerPerson = racketParticipantsList.length > 0 
-      ? schedule.racketPrice / racketParticipantsList.length 
+      ? Math.ceil(schedule.racketPrice / racketParticipantsList.length)
       : 0;
     const waterSharePerPerson = waterParticipantsList.length > 0 
-      ? schedule.waterPrice / waterParticipantsList.length 
+      ? Math.ceil(schedule.waterPrice / waterParticipantsList.length)
       : 0;
 
     // Create payments
