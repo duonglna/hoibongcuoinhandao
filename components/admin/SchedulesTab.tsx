@@ -212,6 +212,33 @@ export default function SchedulesTab() {
     return <div className="text-center py-8">Đang tải...</div>;
   }
 
+  const getScheduleStatus = (schedule: Schedule) => {
+    try {
+      const scheduleDate = new Date(schedule.date);
+      const [hours, minutes] = schedule.startTime.split(':').map(Number);
+      const scheduleDateTime = new Date(scheduleDate);
+      scheduleDateTime.setHours(hours, minutes, 0, 0);
+
+      const endDateTime = new Date(scheduleDateTime);
+      endDateTime.setHours(scheduleDateTime.getHours() + schedule.hours);
+
+      const now = new Date();
+
+      if (now < scheduleDateTime) {
+        return { text: 'Sắp diễn ra', color: 'bg-blue-100 text-blue-800' };
+      }
+      if (now >= scheduleDateTime && now < endDateTime) {
+        return { text: 'Đang diễn ra', color: 'bg-green-100 text-green-800' };
+      }
+      if (schedule.status === 'done') {
+        return { text: 'Đã tính', color: 'bg-gray-100 text-gray-800' };
+      }
+      return { text: 'Chưa tính', color: 'bg-yellow-100 text-yellow-800' };
+    } catch {
+      return { text: 'Chưa tính', color: 'bg-yellow-100 text-yellow-800' };
+    }
+  };
+
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
@@ -366,132 +393,116 @@ export default function SchedulesTab() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:mx-0 sm:px-0">
-          <table className="min-w-max w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sân</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {schedules.map((schedule) => {
-              const court = courts.find(c => c.id === schedule.courtID);
-              const participantNames = schedule.participants
-                .map(id => members.find(m => m.id === id)?.name)
-                .filter(Boolean)
-                .join(', ');
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {schedules.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-6 text-gray-600">
+            Chưa có lịch chơi nào.
+          </div>
+        ) : (
+          schedules.map((schedule) => {
+            const court = courts.find(c => c.id === schedule.courtID);
+            const participantNames = schedule.participants
+              .map(id => members.find(m => m.id === id)?.name)
+              .filter(Boolean)
+              .join(', ');
+            const status = getScheduleStatus(schedule);
 
-              // Determine schedule status
-              const getScheduleStatus = () => {
-                try {
-                  const scheduleDate = new Date(schedule.date);
-                  const [hours, minutes] = schedule.startTime.split(':').map(Number);
-                  const scheduleDateTime = new Date(scheduleDate);
-                  scheduleDateTime.setHours(hours, minutes, 0, 0);
-                  
-                  const endDateTime = new Date(scheduleDateTime);
-                  endDateTime.setHours(scheduleDateTime.getHours() + schedule.hours);
-                  
-                  const now = new Date();
-                  
-                  if (now < scheduleDateTime) {
-                    return { text: 'Sắp diễn ra', color: 'bg-blue-100 text-blue-800' };
-                  } else if (now >= scheduleDateTime && now < endDateTime) {
-                    return { text: 'Đang diễn ra', color: 'bg-green-100 text-green-800' };
-                  } else {
-                    // Past event
-                    if (schedule.status === 'done') {
-                      return { text: 'Đã tính', color: 'bg-gray-100 text-gray-800' };
-                    } else {
-                      return { text: 'Chưa tính', color: 'bg-yellow-100 text-yellow-800' };
-                    }
-                  }
-                } catch {
-                  return { text: 'Chưa tính', color: 'bg-yellow-100 text-yellow-800' };
-                }
-              };
-
-              const status = getScheduleStatus();
-
-              return (
-                <tr key={schedule.id}>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(schedule.date).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {schedule.startTime} ({schedule.hours}h)
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 min-w-[12rem]">
-                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                      <span className="font-medium text-gray-800">{court?.name || 'N/A'}</span>
-                      <span className="text-xs text-gray-400">({schedule.numberOfCourts || 1} sân)</span>
-                      <span className={`px-2 py-1 text-xs rounded-full shrink-0 ${status.color}`}>
+            return (
+              <div key={schedule.id} className="bg-white rounded-lg shadow p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                        {new Date(schedule.date).toLocaleDateString('vi-VN')}
+                      </h3>
+                      <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
                         {status.text}
                       </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        schedule.status === 'done'
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {schedule.status === 'done' ? 'Đã tính' : 'Chưa tính'}
+                      </span>
                     </div>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 max-w-[14rem] sm:max-w-md">
-                    {schedule.participants.length > 0 ? `${schedule.participants.length} thành viên: ${participantNames}` : 'Chưa có'}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      schedule.status === 'done' 
-                        ? 'bg-gray-100 text-gray-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {schedule.status === 'done' ? 'Đã tính' : 'Chưa tính'}
+                    <p className="mt-1 text-sm text-gray-600">
+                      {schedule.startTime} • {schedule.hours} giờ • {schedule.numberOfCourts || 1} sân
+                    </p>
+                    <p className="mt-2 text-sm text-gray-800 break-words">
+                      <span className="font-medium">Sân:</span> {court?.name || 'N/A'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {status.text === 'Chưa tính' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSchedule(schedule);
+                          setRacketParticipants([]);
+                          setWaterParticipants([]);
+                          setShowCalculateModal(true);
+                        }}
+                        className="text-green-600 hover:text-green-900 p-1.5 rounded hover:bg-green-50 touch-manipulation"
+                        title="Tính tiền"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(schedule)}
+                      className="text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50 touch-manipulation"
+                      title="Sửa"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirm(schedule.id)}
+                      className="text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50 touch-manipulation"
+                      title="Xóa"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-gray-600">Thành viên</p>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {schedule.participants.length} người
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-gray-600">Giá sân</p>
+                    <p className="mt-1 font-medium text-gray-900">
+                      {formatVND(schedule.courtPrice)} VNĐ
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 text-sm text-gray-600 break-words">
+                  {schedule.participants.length > 0 ? (
+                    <span>
+                      <span className="font-medium text-gray-700">Danh sách:</span> {participantNames}
                     </span>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center gap-2">
-                      {status.text === 'Chưa tính' && (
-                        <button
-                          onClick={() => {
-                            setSelectedSchedule(schedule);
-                            setRacketParticipants([]);
-                            setWaterParticipants([]);
-                            setShowCalculateModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                          title="Tính tiền"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleEdit(schedule)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                        title="Sửa"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(schedule.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                        title="Xóa"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        </div>
+                  ) : (
+                    'Chưa có thành viên.'
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {showCalculateModal && selectedSchedule && (
