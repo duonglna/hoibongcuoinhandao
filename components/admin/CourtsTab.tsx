@@ -108,22 +108,23 @@ export default function CourtsTab() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Danh sách sân</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold">Danh sách sân</h2>
         <button
+          type="button"
           onClick={() => {
             setShowForm(!showForm);
             setEditingCourt(null);
             setFormData({ name: '', address: '', googleMapLink: '', pricePerHour: 0 });
           }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 shrink-0 self-start touch-manipulation text-sm sm:text-base"
         >
           {showForm ? 'Hủy' : 'Thêm sân'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
           <h3 className="text-lg font-semibold mb-4">
             {editingCourt ? 'Sửa sân' : 'Thêm sân'}
           </h3>
@@ -188,29 +189,30 @@ export default function CourtsTab() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="min-w-max w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sân</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Địa chỉ</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá/giờ</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Link Maps</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sân</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Địa chỉ</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá/giờ</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Link Maps</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {courts.map((court) => (
               <tr key={court.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
                   {court.name}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 min-w-[12rem] max-w-xs">
                   {court.address}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatVND(court.pricePerHour)} VNĐ
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
                   <a
                     href={court.googleMapLink}
                     target="_blank"
@@ -220,7 +222,7 @@ export default function CourtsTab() {
                     Xem bản đồ
                   </a>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => handleEdit(court)}
@@ -246,11 +248,12 @@ export default function CourtsTab() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-5 sm:p-6 max-w-md w-full max-h-[min(90dvh,28rem)] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Xác nhận xóa</h3>
             <p className="text-gray-600 mb-6">
               Bạn có chắc chắn muốn xóa sân này? Hành động này không thể hoàn tác.

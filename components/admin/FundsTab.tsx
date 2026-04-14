@@ -187,12 +187,13 @@ export default function FundsTab() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Quỹ thành viên</h2>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold">Quỹ thành viên</h2>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
+            type="button"
             onClick={fetchData}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            className="bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2 flex-1 sm:flex-none min-w-[8rem] touch-manipulation text-sm sm:text-base"
             title="Làm mới dữ liệu"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,20 +202,21 @@ export default function FundsTab() {
             Làm mới
           </button>
           <button
+            type="button"
             onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 flex-1 sm:flex-none min-w-[8rem] touch-manipulation text-sm sm:text-base"
           >
             {showForm ? 'Hủy' : 'Thêm quỹ'}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng quỹ đã đóng</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 break-words">
                 {formatVND(stats.totalFunds)} VNĐ
               </p>
             </div>
@@ -226,11 +228,11 @@ export default function FundsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng quỹ còn lại</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-xl sm:text-2xl font-bold text-green-600 break-words">
                 {formatVND(stats.totalRemaining)} VNĐ
               </p>
             </div>
@@ -242,11 +244,11 @@ export default function FundsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng đã chi tiêu</p>
-              <p className="text-2xl font-bold text-orange-600">
+              <p className="text-xl sm:text-2xl font-bold text-orange-600 break-words">
                 {formatVND(stats.totalPayments)} VNĐ
               </p>
             </div>
@@ -258,11 +260,11 @@ export default function FundsTab() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Tổng nợ</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-xl sm:text-2xl font-bold text-red-600 break-words">
                 {formatVND(stats.totalDebt)} VNĐ
               </p>
             </div>
@@ -276,7 +278,7 @@ export default function FundsTab() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -320,15 +322,16 @@ export default function FundsTab() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="min-w-max w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -338,16 +341,16 @@ export default function FundsTab() {
 
               return (
                 <tr key={member.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
                     {member.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {formatVND(info.totalFunds)} VNĐ
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-orange-600 font-medium whitespace-nowrap">
                     {formatVND(info.totalPayments)} VNĐ
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-3 sm:px-6 py-4 text-sm">
                     {info.balance > 0 ? (
                       <span className="text-green-600 font-medium">
                         {formatVND(info.balance)} VNĐ
@@ -356,7 +359,7 @@ export default function FundsTab() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-3 sm:px-6 py-4 text-sm whitespace-nowrap">
                     {debt > 0 ? (
                       <span className="text-red-600 font-medium">
                         {formatVND(debt)} VNĐ
@@ -365,12 +368,12 @@ export default function FundsTab() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-3 sm:px-6 py-4 text-sm align-top min-w-[9rem]">
                     <button
                       type="button"
                       disabled={debt === 0}
                       onClick={() => handleQuickAddFund(member.id, info.balance)}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium border ${
+                      className={`w-full sm:w-auto max-w-[14rem] text-left sm:text-center px-3 py-2 rounded-lg text-xs font-medium border touch-manipulation leading-snug ${
                         debt === 0
                           ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                           : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
@@ -384,6 +387,7 @@ export default function FundsTab() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

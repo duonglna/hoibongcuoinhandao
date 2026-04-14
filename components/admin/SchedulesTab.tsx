@@ -214,9 +214,10 @@ export default function SchedulesTab() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Lịch chơi</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold">Lịch chơi</h2>
         <button
+          type="button"
           onClick={() => {
             setShowForm(!showForm);
             setEditingSchedule(null);
@@ -231,14 +232,14 @@ export default function SchedulesTab() {
               participants: [],
             });
           }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 shrink-0 self-start touch-manipulation text-sm sm:text-base"
         >
           {showForm ? 'Hủy' : 'Thêm lịch chơi'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
           <h3 className="text-lg font-semibold mb-4">
             {editingSchedule ? 'Sửa lịch chơi' : 'Thêm lịch chơi'}
           </h3>
@@ -342,7 +343,7 @@ export default function SchedulesTab() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Thành viên tham gia
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 sm:p-4">
               {members.map(member => (
                 <label key={member.id} className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -366,15 +367,16 @@ export default function SchedulesTab() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="min-w-max w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sân</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giờ</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sân</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -419,25 +421,25 @@ export default function SchedulesTab() {
 
               return (
                 <tr key={schedule.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(schedule.date).toLocaleDateString('vi-VN')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {schedule.startTime} ({schedule.hours}h)
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <span>{court?.name || 'N/A'}</span>
+                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 min-w-[12rem]">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="font-medium text-gray-800">{court?.name || 'N/A'}</span>
                       <span className="text-xs text-gray-400">({schedule.numberOfCourts || 1} sân)</span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full shrink-0 ${status.color}`}>
                         {status.text}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 max-w-[14rem] sm:max-w-md">
                     {schedule.participants.length > 0 ? `${schedule.participants.length} thành viên: ${participantNames}` : 'Chưa có'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       schedule.status === 'done' 
                         ? 'bg-gray-100 text-gray-800' 
@@ -446,8 +448,8 @@ export default function SchedulesTab() {
                       {schedule.status === 'done' ? 'Đã tính' : 'Chưa tính'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-3">
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex items-center gap-2">
                       {status.text === 'Chưa tính' && (
                         <button
                           onClick={() => {
@@ -489,11 +491,12 @@ export default function SchedulesTab() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showCalculateModal && selectedSchedule && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-5 sm:p-6 max-w-2xl w-full max-h-[min(90dvh,85vh)] overflow-y-auto overscroll-contain">
             <h3 className="text-xl font-semibold mb-4">Tính tiền cho lịch chơi</h3>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
@@ -520,11 +523,11 @@ export default function SchedulesTab() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Thành viên thuê vợt
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
                   {selectedSchedule.participants.map(memberID => {
                     const member = members.find(m => m.id === memberID);
                     return member ? (
-                      <label key={memberID} className="flex items-center space-x-2 cursor-pointer">
+                      <label key={memberID} className="flex items-center space-x-2 cursor-pointer touch-manipulation">
                         <input
                           type="checkbox"
                           checked={racketParticipants.includes(memberID)}
@@ -550,11 +553,11 @@ export default function SchedulesTab() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Thành viên mua nước
                 </label>
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
                   {selectedSchedule.participants.map(memberID => {
                     const member = members.find(m => m.id === memberID);
                     return member ? (
-                      <label key={memberID} className="flex items-center space-x-2 cursor-pointer">
+                      <label key={memberID} className="flex items-center space-x-2 cursor-pointer touch-manipulation">
                         <input
                           type="checkbox"
                           checked={waterParticipants.includes(memberID)}
@@ -575,19 +578,21 @@ export default function SchedulesTab() {
               </div>
             )}
 
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-6">
               <button
+                type="button"
                 onClick={() => {
                   setShowCalculateModal(false);
                   setSelectedSchedule(null);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 touch-manipulation"
               >
                 Hủy
               </button>
               <button
+                type="button"
                 onClick={handleCalculate}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="w-full sm:w-auto px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 touch-manipulation"
               >
                 Tính tiền
               </button>
@@ -597,8 +602,8 @@ export default function SchedulesTab() {
       )}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-5 sm:p-6 max-w-md w-full max-h-[min(90dvh,28rem)] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Xác nhận xóa</h3>
             <p className="text-gray-600 mb-6">
               Bạn có chắc chắn muốn xóa lịch chơi này? Hành động này không thể hoàn tác.
