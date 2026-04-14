@@ -321,59 +321,63 @@ export default function FundsTab() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 sm:mx-0 sm:px-0">
-          <table className="min-w-max w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
-              <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+      {members.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-6 text-gray-600">
+          Chưa có thành viên.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 md:hidden">
             {members.map((member) => {
               const info = getMemberFinancialInfo(member.id);
               const debt = info.balance < 0 ? Math.abs(info.balance) : 0;
 
               return (
-                <tr key={member.id}>
-                  <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
-                    {member.name}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                    {formatVND(info.totalFunds)} VNĐ
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm text-orange-600 font-medium whitespace-nowrap">
-                    {formatVND(info.totalPayments)} VNĐ
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm">
-                    {info.balance > 0 ? (
-                      <span className="text-green-600 font-medium">
-                        {formatVND(info.balance)} VNĐ
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm whitespace-nowrap">
-                    {debt > 0 ? (
-                      <span className="text-red-600 font-medium">
-                        {formatVND(debt)} VNĐ
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 text-sm align-top min-w-[9rem]">
+                <div key={member.id} className="bg-white rounded-lg shadow p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                      {member.name}
+                    </h3>
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                      debt > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {debt > 0 ? 'Đang nợ' : 'Ổn'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-gray-600">Tiền quỹ đã đóng</p>
+                      <p className="mt-1 font-medium text-gray-900">
+                        {formatVND(info.totalFunds)} VNĐ
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-gray-600">Đã chi tiêu</p>
+                      <p className="mt-1 font-medium text-orange-600">
+                        {formatVND(info.totalPayments)} VNĐ
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-gray-600">Quỹ còn</p>
+                      <p className="mt-1 font-medium text-green-600">
+                        {info.balance > 0 ? `${formatVND(info.balance)} VNĐ` : '-'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-gray-600">Còn nợ</p>
+                      <p className="mt-1 font-medium text-red-600">
+                        {debt > 0 ? `${formatVND(debt)} VNĐ` : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
                     <button
                       type="button"
                       disabled={debt === 0}
                       onClick={() => handleQuickAddFund(member.id, info.balance)}
-                      className={`w-full sm:w-auto max-w-[14rem] text-left sm:text-center px-3 py-2 rounded-lg text-xs font-medium border touch-manipulation leading-snug ${
+                      className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium border touch-manipulation ${
                         debt === 0
                           ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                           : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
@@ -381,14 +385,82 @@ export default function FundsTab() {
                     >
                       {debt > 0 ? `Bù quỹ ${formatVND(debt)} VNĐ` : 'Không nợ'}
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
-        </div>
-      </div>
+          </div>
+
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto overscroll-x-contain">
+              <table className="min-w-max w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành viên</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ đã đóng</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số tiền đã chi tiêu</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền quỹ còn</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiền còn nợ</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {members.map((member) => {
+                    const info = getMemberFinancialInfo(member.id);
+                    const debt = info.balance < 0 ? Math.abs(info.balance) : 0;
+
+                    return (
+                      <tr key={member.id}>
+                        <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
+                          {member.name}
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {formatVND(info.totalFunds)} VNĐ
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 text-sm text-orange-600 font-medium whitespace-nowrap">
+                          {formatVND(info.totalPayments)} VNĐ
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 text-sm">
+                          {info.balance > 0 ? (
+                            <span className="text-green-600 font-medium">
+                              {formatVND(info.balance)} VNĐ
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 text-sm whitespace-nowrap">
+                          {debt > 0 ? (
+                            <span className="text-red-600 font-medium">
+                              {formatVND(debt)} VNĐ
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 text-sm align-top min-w-[9rem]">
+                          <button
+                            type="button"
+                            disabled={debt === 0}
+                            onClick={() => handleQuickAddFund(member.id, info.balance)}
+                            className={`w-full sm:w-auto max-w-[14rem] text-left sm:text-center px-3 py-2 rounded-lg text-xs font-medium border touch-manipulation leading-snug ${
+                              debt === 0
+                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                            }`}
+                          >
+                            {debt > 0 ? `Bù quỹ ${formatVND(debt)} VNĐ` : 'Không nợ'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

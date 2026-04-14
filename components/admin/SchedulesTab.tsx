@@ -262,6 +262,148 @@ export default function SchedulesTab() {
     }
   };
 
+  const scheduleFormContent = (
+    <>
+      <h3 className="text-lg font-semibold mb-4">
+        {editingSchedule ? 'Sửa lịch chơi' : 'Thêm lịch chơi'}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Sân
+          </label>
+          <select
+            value={formData.courtID}
+            onChange={(e) => setFormData({ ...formData, courtID: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            required
+          >
+            <option value="">Chọn sân</option>
+            {courts.map(court => (
+              <option key={court.id} value={court.id}>
+                {court.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Ngày
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Giờ bắt đầu
+          </label>
+          <input
+            type="time"
+            value={formData.startTime}
+            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Số giờ chơi
+          </label>
+          <input
+            type="number"
+            value={formData.hours}
+            onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            required
+            min="0.5"
+            step="0.5"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Số sân
+          </label>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={formData.numberOfCourts}
+            onChange={(e) => setFormData({ ...formData, numberOfCourts: parseInt(e.target.value) || 1 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Giá vợt (VNĐ)
+          </label>
+          <input
+            type="number"
+            value={formData.racketPrice}
+            onChange={(e) => setFormData({ ...formData, racketPrice: parseFloat(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            min="0"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Giá nước (VNĐ)
+          </label>
+          <input
+            type="number"
+            value={formData.waterPrice}
+            onChange={(e) => setFormData({ ...formData, waterPrice: parseFloat(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            min="0"
+          />
+        </div>
+      </div>
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Thành viên tham gia
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 sm:p-4">
+          {members.map(member => (
+            <label key={member.id} className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.participants.includes(member.id)}
+                onChange={() => toggleParticipant(member.id)}
+                className="rounded"
+              />
+              <span className="text-sm">{member.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        {editingSchedule && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm(false);
+              setEditingSchedule(null);
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Hủy
+          </button>
+        )}
+        <button
+          type="submit"
+          className="w-full sm:w-auto bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700"
+        >
+          {editingSchedule ? 'Cập nhật' : 'Thêm lịch'}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
@@ -289,131 +431,19 @@ export default function SchedulesTab() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
-          <h3 className="text-lg font-semibold mb-4">
-            {editingSchedule ? 'Sửa lịch chơi' : 'Thêm lịch chơi'}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sân
-              </label>
-              <select
-                value={formData.courtID}
-                onChange={(e) => setFormData({ ...formData, courtID: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              >
-                <option value="">Chọn sân</option>
-                {courts.map(court => (
-                  <option key={court.id} value={court.id}>
-                    {court.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ngày
-              </label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giờ bắt đầu
-              </label>
-              <input
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số giờ chơi
-              </label>
-              <input
-                type="number"
-                value={formData.hours}
-                onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-                min="0.5"
-                step="0.5"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số sân
-              </label>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={formData.numberOfCourts}
-                onChange={(e) => setFormData({ ...formData, numberOfCourts: parseInt(e.target.value) || 1 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giá vợt (VNĐ)
-              </label>
-              <input
-                type="number"
-                value={formData.racketPrice}
-                onChange={(e) => setFormData({ ...formData, racketPrice: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giá nước (VNĐ)
-              </label>
-              <input
-                type="number"
-                value={formData.waterPrice}
-                onChange={(e) => setFormData({ ...formData, waterPrice: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                min="0"
-              />
+        editingSchedule ? (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <form onSubmit={handleSubmit}>
+                {scheduleFormContent}
+              </form>
             </div>
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Thành viên tham gia
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 sm:p-4">
-              {members.map(member => (
-                <label key={member.id} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.participants.includes(member.id)}
-                    onChange={() => toggleParticipant(member.id)}
-                    className="rounded"
-                  />
-                  <span className="text-sm">{member.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-          >
-            {editingSchedule ? 'Cập nhật' : 'Thêm lịch'}
-          </button>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
+            {scheduleFormContent}
+          </form>
+        )
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
