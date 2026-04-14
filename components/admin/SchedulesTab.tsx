@@ -212,6 +212,12 @@ export default function SchedulesTab() {
     return <div className="text-center py-8">Đang tải...</div>;
   }
 
+  const sortedSchedules = [...schedules].sort((a, b) => {
+    const dateTimeA = new Date(`${a.date}T${a.startTime}`).getTime();
+    const dateTimeB = new Date(`${b.date}T${b.startTime}`).getTime();
+    return dateTimeB - dateTimeA;
+  });
+
   const getScheduleStatus = (schedule: Schedule) => {
     try {
       const scheduleDate = new Date(schedule.date);
@@ -399,7 +405,7 @@ export default function SchedulesTab() {
             Chưa có lịch chơi nào.
           </div>
         ) : (
-          schedules.map((schedule) => {
+          sortedSchedules.map((schedule) => {
             const court = courts.find(c => c.id === schedule.courtID);
             const participantNames = schedule.participants
               .map(id => members.find(m => m.id === id)?.name)
