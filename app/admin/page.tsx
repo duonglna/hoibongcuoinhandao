@@ -8,6 +8,7 @@ import SchedulesTab from '@/components/admin/SchedulesTab';
 import FundsTab from '@/components/admin/FundsTab';
 
 type Tab = 'members' | 'courts' | 'schedules' | 'funds';
+const ADMIN_AUTH_KEY = 'adminAuthUntil';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -16,8 +17,11 @@ export default function AdminPage() {
   const [fundsRefreshKey, setFundsRefreshKey] = useState(0);
 
   useEffect(() => {
-    const admin = sessionStorage.getItem('admin');
-    if (!admin) {
+    const expiresAtRaw = localStorage.getItem(ADMIN_AUTH_KEY);
+    const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : 0;
+
+    if (!expiresAt || Number.isNaN(expiresAt) || expiresAt < Date.now()) {
+      localStorage.removeItem(ADMIN_AUTH_KEY);
       router.push('/');
     } else {
       setIsAuthenticated(true);
@@ -46,7 +50,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => {
-                sessionStorage.removeItem('admin');
+                localStorage.removeItem(ADMIN_AUTH_KEY);
                 router.push('/');
               }}
               className="text-gray-600 hover:text-gray-900 self-start sm:self-auto text-sm sm:text-base py-1 touch-manipulation"

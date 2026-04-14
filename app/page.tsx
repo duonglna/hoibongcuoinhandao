@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const ADMIN_AUTH_KEY = 'adminAuthUntil';
+const NINETY_DAYS_IN_MS = 90 * 24 * 60 * 60 * 1000;
+
 export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,7 +24,8 @@ export default function Home() {
     const data = await response.json();
 
     if (data.success) {
-      sessionStorage.setItem('admin', 'true');
+      const expiresAt = Date.now() + NINETY_DAYS_IN_MS;
+      localStorage.setItem(ADMIN_AUTH_KEY, String(expiresAt));
       router.push('/admin');
     } else {
       setError('Mật khẩu không đúng');

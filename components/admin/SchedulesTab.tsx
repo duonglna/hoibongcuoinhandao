@@ -212,9 +212,26 @@ export default function SchedulesTab() {
     return <div className="text-center py-8">Đang tải...</div>;
   }
 
+  const getScheduleTimestamp = (schedule: Schedule) => {
+    const [year, month, day] = String(schedule.date).split('-').map(Number);
+    const [hour, minute] = String(schedule.startTime).split(':').map(Number);
+
+    if (
+      !Number.isFinite(year) ||
+      !Number.isFinite(month) ||
+      !Number.isFinite(day) ||
+      !Number.isFinite(hour) ||
+      !Number.isFinite(minute)
+    ) {
+      return 0;
+    }
+
+    return new Date(year, month - 1, day, hour, minute, 0, 0).getTime();
+  };
+
   const sortedSchedules = [...schedules].sort((a, b) => {
-    const dateTimeA = new Date(`${a.date}T${a.startTime}`).getTime();
-    const dateTimeB = new Date(`${b.date}T${b.startTime}`).getTime();
+    const dateTimeA = getScheduleTimestamp(a);
+    const dateTimeB = getScheduleTimestamp(b);
     return dateTimeB - dateTimeA;
   });
 
